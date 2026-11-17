@@ -11,8 +11,8 @@ import fs from "node:fs";
 
 const source = fs.readFileSync(".env", "utf8");
 const values = {};
-for (const line of source.split(/\\r?\\n/)) {
-  const match = line.match(/^\\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)\\s*$/);
+for (const line of source.split(/\r?\n/)) {
+  const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)\s*$/);
   if (match) values[match[1]] = match[2].trim().replace(/^["']|["']$/g, "");
 }
 const required = [
@@ -27,8 +27,8 @@ if (missing.length) {
 }
 fs.writeFileSync(
   ".env.production",
-  "VITE_SUPABASE_URL=" + values.VITE_SUPABASE_URL + "\\n" +
-  "VITE_SUPABASE_PUBLISHABLE_KEY=" + values.VITE_SUPABASE_PUBLISHABLE_KEY + "\\n"
+  "VITE_SUPABASE_URL=" + values.VITE_SUPABASE_URL + "\n" +
+  "VITE_SUPABASE_PUBLISHABLE_KEY=" + values.VITE_SUPABASE_PUBLISHABLE_KEY + "\n"
 );
 const config = JSON.parse(fs.readFileSync("wrangler.jsonc", "utf8"));
 config.vars = {
@@ -36,7 +36,7 @@ config.vars = {
   SUPABASE_URL: values.SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY: values.SUPABASE_PUBLISHABLE_KEY,
 };
-fs.writeFileSync("wrangler.jsonc", JSON.stringify(config, null, 2) + "\\n");
+fs.writeFileSync("wrangler.jsonc", JSON.stringify(config, null, 2) + "\n");
 fs.unlinkSync(".env");
 NODE
 
