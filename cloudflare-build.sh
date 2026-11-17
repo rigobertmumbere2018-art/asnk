@@ -43,6 +43,15 @@ source = source.replace(
 );
 fs.writeFileSync(searchRoute, source);
 
+// TanStack Router's ErrorComponentProps types the boundary error as unknown.
+const rootRoute = "src/routes/__root.tsx";
+let rootSource = fs.readFileSync(rootRoute, "utf8");
+rootSource = rootSource.replace(
+  "function ErrorComponent({ error, reset }: { error: Error; reset: () => void })",
+  "function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })"
+);
+fs.writeFileSync(rootRoute, rootSource);
+
 let tsconfig = fs.readFileSync("tsconfig.json", "utf8");
 if (!tsconfig.includes('"types": ["vite/client", "node"]')) {
   tsconfig = tsconfig.replace('"types": ["vite/client"]', '"types": ["vite/client", "node"]');
