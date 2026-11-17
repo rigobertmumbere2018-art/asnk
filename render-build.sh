@@ -3,6 +3,7 @@ set -euo pipefail
 
 echo "==> Extracting the ASNK application"
 unzip -o "Kivu Scouts Hub.zip"
+rm -f bun.lock bun.lockb
 
 echo "==> Extracting public Supabase settings without retaining .env"
 node --input-type=module <<'NODE'
