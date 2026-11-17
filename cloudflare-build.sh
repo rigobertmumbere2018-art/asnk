@@ -111,16 +111,17 @@ echo "==> Building the Cloudflare Worker"
 npm run build
 
 echo "==> Starting a local Workers preview"
-npm run preview -- --host 127.0.0.1 --port 4173 --strictPort > /tmp/asnk-preview.log 2>&1 &
+./node_modules/.bin/vite preview --host 127.0.0.1 --port 4173 --strictPort > /tmp/asnk-preview.log 2>&1 &
 PREVIEW_PID=$!
 cleanup_preview() {
   kill "$PREVIEW_PID" 2>/dev/null || true
+  wait "$PREVIEW_PID" 2>/dev/null || true
 }
 trap cleanup_preview EXIT
 
 HOME_OK=0
 for attempt in $(seq 1 30); do
-  if curl --silent --show-error --fail http://127.0.0.1:4173/ -o /tmp/asnk-home.html; then
+  if curl --connect-timeout 2 --max-time 8 --silent --show-error --fail http://127.0.0.1:4173/ -o /tmp/asnk-home.html; then
     HOME_OK=1
     break
   fi
@@ -133,7 +134,7 @@ if [ "$HOME_OK" -ne 1 ]; then
 fi
 
 for route in /actualites /evenements /galerie /mouvement /contact; do
-  status=$(curl --silent --output /dev/null --write-out "%{http_code}" "http://127.0.0.1:4173$route")
+  status=$(curl --connect-timeout 2 --max-time 12 --silent --output "/tmp/asnk-route.html" --write-out "%{http_code}" "http://127.0.0.1:4173$route" || true)
   if [ "$status" != "200" ]; then
     cat /tmp/asnk-preview.log
     echo "Route $route returned HTTP $status"
