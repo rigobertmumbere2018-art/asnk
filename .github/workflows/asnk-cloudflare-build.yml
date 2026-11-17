@@ -14,9 +14,9 @@ permissions:
 
 jobs:
   build:
-    name: Install, typecheck and build
+    name: Install, typecheck, build and dry-run
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -25,6 +25,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.16.0"
+          cache: npm
 
-      - name: Prepare and build ASNK for Cloudflare
-        run: bash render-build.sh
+      - name: Prepare and validate ASNK for Cloudflare
+        run: bash cloudflare-build.sh
