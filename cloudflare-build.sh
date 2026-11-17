@@ -43,12 +43,11 @@ source = source.replace(
 );
 fs.writeFileSync(searchRoute, source);
 
-const tsconfig = JSON.parse(fs.readFileSync("tsconfig.json", "utf8"));
-tsconfig.compilerOptions.types = ["vite/client", "node"];
-if (!tsconfig.include.includes("worker-configuration.d.ts")) {
-  tsconfig.include.push("worker-configuration.d.ts");
+let tsconfig = fs.readFileSync("tsconfig.json", "utf8");
+if (!tsconfig.includes('"types": ["vite/client", "node"]')) {
+  tsconfig = tsconfig.replace('"types": ["vite/client"]', '"types": ["vite/client", "node"]');
 }
-fs.writeFileSync("tsconfig.json", JSON.stringify(tsconfig, null, 2) + "\n");
+fs.writeFileSync("tsconfig.json", tsconfig);
 
 const envText = fs.readFileSync(".env", "utf8");
 const values = {};
@@ -92,7 +91,6 @@ EOF
 
 echo "==> Installing Cloudflare dependencies"
 npm install --save-dev @cloudflare/vite-plugin wrangler --no-audit --no-fund
-npm install --no-audit --no-fund
 
 echo "==> Generating Cloudflare Worker types"
 npm run cf-typegen
