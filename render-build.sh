@@ -4,8 +4,41 @@ set -euo pipefail
 echo "==> Extracting the ASNK application"
 unzip -o "Kivu Scouts Hub.zip"
 
-# Never use the embedded local environment file in CI or ship it to a Worker.
-rm -f .env
+# Extract only the public Supabase configuration needed by the browser and Worker.
+# Do not carry the original local .env file into the build output.
+node --input-type=module <<'NODE'
+import fs from "node:fs";
+
+const source = fs.readFileSync(".env", "utf8");
+const values = {};
+for (const line of source.split(/\\r?\\n/)) {
+  const match = line.match(/^\\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)\\s*$/);
+  if (match) values[match[1]] = match[2].trim().replace(/^["']|["']$/g, "");
+}
+const required = [
+  "SUPABASE_URL",
+  "SUPABASE_PUBLISHABLE_KEY",
+  "VITE_SUPABASE_URL",
+  "VITE_SUPABASE_PUBLISHABLE_KEY",
+];
+const missing = required.filter((key) => !values[key]);
+if (missing.length) {
+  throw new Error("Missing required Supabase configuration keys: " + missing.join(", "));
+}
+fs.writeFileSync(
+  ".env.production",
+  "VITE_SUPABASE_URL=" + values.VITE_SUPABASE_URL + "\\n" +
+  "VITE_SUPABASE_PUBLISHABLE_KEY=" + values.VITE_SUPABASE_PUBLISHABLE_KEY + "\\n"
+);
+const config = JSON.parse(fs.readFileSync("wrangler.jsonc", "utf8"));
+config.vars = {
+  ...(config.vars ?? {}),
+  SUPABASE_URL: values.SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY: values.SUPABASE_PUBLISHABLE_KEY,
+};
+fs.writeFileSync("wrangler.jsonc", JSON.stringify(config, null, 2) + "\\n");
+fs.unlinkSync(".env");
+NODE
 
 echo "==> Applying the official Cloudflare Workers configuration"
 cp cloudflare.vite.config.ts vite.config.ts
