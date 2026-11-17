@@ -1,8 +1,11 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "asnk-scouts-nord-kivu",
-  "main": "@tanstack/react-start/server-entry",
+  "main": "src/server.ts",
   "compatibility_date": "2026-11-17",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "observability": {
     "enabled": true
   }
