@@ -1,0 +1,30 @@
+name: ASNK Cloudflare build check
+
+on:
+  push:
+    branches:
+      - cloudflare-ready
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Install, typecheck and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+
+      - name: Prepare and build ASNK for Cloudflare
+        run: bash render-build.sh
