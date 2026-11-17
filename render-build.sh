@@ -4,27 +4,46 @@ set -euo pipefail
 echo "==> Extracting the ASNK application"
 unzip -o "Kivu Scouts Hub.zip"
 
+# Never use the embedded local environment file in CI or ship it to a Worker.
+rm -f .env
+
 echo "==> Applying the official Cloudflare Workers configuration"
 cp cloudflare.vite.config.ts vite.config.ts
 
-echo "==> Removing the Render/Lovable/Nitro build adapters"
-npm pkg delete 'devDependencies.@lovable.dev/vite-tanstack-config'
-npm pkg delete 'devDependencies.nitro'
-npm pkg delete 'dependencies.@tanstack/zod-adapter'
+echo "==> Replacing the Render/Lovable/Nitro build setup"
+node --input-type=module <<'NODE'
+import fs from "node:fs";
 
-echo "==> Pinning the Cloudflare build toolchain"
-npm pkg set version=1.0.0
-npm pkg set 'engines.node=>=22.12.0'
-npm pkg set 'devDependencies.vite=8.3.8'
-npm pkg set 'devDependencies.@cloudflare/vite-plugin=1.69.1'
-npm pkg set 'devDependencies.wrangler=4.162.0'
-npm pkg set 'dependencies.@tailwindcss/vite=4.3.5'
-npm pkg set 'dependencies.tailwindcss=4.3.5'
-npm pkg set 'scripts.build=vite build'
-npm pkg set 'scripts.preview=vite preview'
-npm pkg set 'scripts.typecheck=tsc --noEmit'
-npm pkg set 'scripts.cf-typegen=wrangler types'
-npm pkg set 'scripts.deploy=npm run build && wrangler deploy'
+const file = "package.json";
+const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+
+delete pkg.devDependencies?.["@lovable.dev/vite-tanstack-config"];
+delete pkg.devDependencies?.nitro;
+delete pkg.dependencies?.["@tanstack/zod-adapter"];
+
+pkg.version = "1.0.0";
+pkg.engines = { ...(pkg.engines ?? {}), node: ">=22.12.0" };
+pkg.devDependencies = {
+  ...(pkg.devDependencies ?? {}),
+  vite: "8.3.8",
+  "@cloudflare/vite-plugin": "1.69.1",
+  wrangler: "4.162.0",
+};
+pkg.dependencies = {
+  ...(pkg.dependencies ?? {}),
+  "@tailwindcss/vite": "4.3.5",
+  tailwindcss: "4.3.5",
+};
+pkg.scripts = {
+  ...(pkg.scripts ?? {}),
+  build: "vite build",
+  preview: "vite preview",
+  typecheck: "tsc --noEmit",
+  "cf-typegen": "wrangler types",
+  deploy: "npm run build && wrangler deploy",
+};
+fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
+NODE
 
 echo "==> Updating the search route for Zod 4"
 node --input-type=module <<'NODE'
@@ -33,7 +52,7 @@ import fs from "node:fs";
 const file = "src/routes/recherche.tsx";
 let source = fs.readFileSync(file, "utf8");
 source = source.replace(
-  'import { zodValidator, fallback } from "@tanstack/zod-adapter";\\n',
+  'import { zodValidator, fallback } from "@tanstack/zod-adapter";\n',
   ""
 );
 source = source.replace(
