@@ -110,6 +110,40 @@ npm run typecheck
 echo "==> Building the Cloudflare Worker"
 npm run build
 
+echo "==> Starting a local Workers preview"
+npm run preview -- --host 127.0.0.1 --port 4173 --strictPort > /tmp/asnk-preview.log 2>&1 &
+PREVIEW_PID=$!
+cleanup_preview() {
+  kill "$PREVIEW_PID" 2>/dev/null || true
+}
+trap cleanup_preview EXIT
+
+HOME_OK=0
+for attempt in $(seq 1 30); do
+  if curl --silent --show-error --fail http://127.0.0.1:4173/ -o /tmp/asnk-home.html; then
+    HOME_OK=1
+    break
+  fi
+  sleep 2
+done
+if [ "$HOME_OK" -ne 1 ]; then
+  cat /tmp/asnk-preview.log
+  echo "ASNK homepage did not respond in the local Workers preview"
+  exit 1
+fi
+
+for route in /actualites /evenements /galerie /mouvement /contact; do
+  status=$(curl --silent --output /dev/null --write-out "%{http_code}" "http://127.0.0.1:4173$route")
+  if [ "$status" != "200" ]; then
+    cat /tmp/asnk-preview.log
+    echo "Route $route returned HTTP $status"
+    exit 1
+  fi
+done
+
+cleanup_preview
+trap - EXIT
+
 echo "==> Checking the Worker package without deploying"
 npx wrangler deploy --dry-run
 
