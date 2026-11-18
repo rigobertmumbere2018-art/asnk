@@ -64,7 +64,7 @@ function Page() {
           },
         });
         if (error) throw error;
-        toast.success("Compte créé. Vérifiez votre email pour confirmer.");
+        toast.success("Compte créé. Vous pouvez maintenant vous connecter.");
         setMode("login");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password, remember });
