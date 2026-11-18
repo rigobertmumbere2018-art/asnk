@@ -3,13 +3,16 @@
   "name": "asnk-scouts-nord-kivu",
   "main": "src/server.ts",
   "compatibility_date": "2026-11-17",
-  "observability": {
-    "enabled": true
-  },
+  "observability": { "enabled": true },
   "r2_buckets": [
+    { "binding": "ASNK_MEDIA", "bucket_name": "asnk-media" }
+  ],
+  "d1_databases": [
     {
-      "binding": "ASNK_MEDIA",
-      "bucket_name": "asnk-media"
+      "binding": "ASNK_DB",
+      "database_name": "asnk-scouts-db",
+      "database_id": "22fa56ef-8d49-4acc-9296-5ac546d4c0d9",
+      "migrations_dir": "migrations"
     }
   ]
 }
