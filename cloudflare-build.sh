@@ -86,8 +86,28 @@ wrangler.vars = {
   ...(wrangler.vars ?? {}),
   SUPABASE_URL: values.SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY: values.SUPABASE_PUBLISHABLE_KEY,
+  ASNK_MEDIA_PUBLIC_BASE_URL: "https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev",
 };
 fs.writeFileSync("wrangler.jsonc", JSON.stringify(wrangler, null, 2) + "\n");
+
+// Move Lovable-hosted image URLs to the public R2 bucket while preserving
+// each original object key and filename.
+const mediaBase = wrangler.vars.ASNK_MEDIA_PUBLIC_BASE_URL;
+function rewriteAssetMetadata(directory) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const fullPath = directory + "/" + entry.name;
+    if (entry.isDirectory()) {
+      rewriteAssetMetadata(fullPath);
+    } else if (entry.isFile() && entry.name.endsWith(".asset.json")) {
+      const asset = JSON.parse(fs.readFileSync(fullPath, "utf8"));
+      if (asset.r2_key) {
+        asset.url = mediaBase + "/" + asset.r2_key;
+        fs.writeFileSync(fullPath, JSON.stringify(asset, null, 2) + "\n");
+      }
+    }
+  }
+}
+rewriteAssetMetadata("src/assets");
 fs.rmSync(".env", { force: true });
 NODE
 
