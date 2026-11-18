@@ -80,19 +80,30 @@ jobs:
           NODE
           npx wrangler deploy --config dist/server/wrangler.json
 
-      - name: Diagnose and verify deployed Cloudflare Worker routes
+      - name: Verify public ASNK pages and assets
         if: github.event_name != 'pull_request'
         run: |
+          set -e
           BASE="https://asnk-scouts-nord-kivu.rigobertmumbere2018.workers.dev"
-          FAILED=0
-          for path in / /index.html /actualites /evenements /galerie /mouvement /contact; do
-            code=$(curl -sS -L -o /tmp/asnk-response -w "%{http_code}" "$BASE$path" || true)
+          for path in / /actualites /evenements /galerie /mouvement /contact; do
+            code=$(curl -sS -L -o /tmp/asnk-response -w "%{http_code}" "$BASE$path")
             echo "$path -> HTTP $code"
             if [ "$code" != "200" ]; then
-              FAILED=1
               echo "Response preview:"
               head -c 1200 /tmp/asnk-response || true
-              echo
+              exit 1
             fi
           done
-          exit "$FAILED"
+          CSS=$(grep -oE 'href="/assets/[^"]+\.css"' /tmp/asnk-response | head -1 | cut -d'"' -f2 || true)
+          if [ -n "$CSS" ]; then
+            code=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE$CSS")
+            echo "CSS $CSS -> HTTP $code"
+            test "$code" = "200"
+          else
+            echo "No CSS reference found on the last page response"
+            exit 1
+          fi
+          IMAGE="https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev/a/v1/576f8e4d-1ed9-4839-9a34-ca86e6082572/c79e0e64-c755-40b4-beb8-642308358f38/asnk-logo.jpg"
+          code=$(curl -sS -o /dev/null -w "%{http_code}" "$IMAGE")
+          echo "R2 logo image -> HTTP $code"
+          test "$code" = "200"
