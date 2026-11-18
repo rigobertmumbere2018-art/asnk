@@ -67,6 +67,17 @@ jobs:
             echo "::error::GitHub repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are required for deployment."
             exit 1
           fi
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const p = "dist/server/wrangler.json";
+          const config = JSON.parse(fs.readFileSync(p, "utf8"));
+          // The generated TanStack config may retain an account_id from its build
+          // environment. Force the account selected by the GitHub secret.
+          config.account_id = process.env.CLOUDFLARE_ACCOUNT_ID;
+          fs.writeFileSync(p, JSON.stringify(config, null, 2) + "\\n");
+          console.log("Deploy target:", config.name);
+          console.log("Cloudflare account_id:", config.account_id);
+          NODE
           npx wrangler deploy --config dist/server/wrangler.json
 
       - name: Verify deployed Cloudflare Worker routes
