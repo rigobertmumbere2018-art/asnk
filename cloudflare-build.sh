@@ -36,7 +36,7 @@ for(let i=0;i<rawTs.length;i++){
 const ts=JSON.parse(cleanTs);
 ts.compilerOptions={...(ts.compilerOptions??{}),noImplicitAny:false};
 ts.compilerOptions.types=["vite/client","node"];
-fs.writeFileSync("tsconfig.json",JSON.stringify(ts,null,2)+"\\n");
+fs.writeFileSync("tsconfig.json",JSON.stringify(ts,null,2)+"\n");
 fs.writeFileSync(".env.production","");
 const wr=JSON.parse(fs.readFileSync("wrangler.jsonc","utf8"));wr.vars={...(wr.vars??{}),ASNK_MEDIA_PUBLIC_BASE_URL:"https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev"};fs.writeFileSync("wrangler.jsonc",JSON.stringify(wr,null,2)+"\n");
 NODE

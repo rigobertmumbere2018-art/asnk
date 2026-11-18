@@ -1,4 +1,7 @@
-interface D1Statement { bind(...values:any[]):D1Statement; first<T=any>(column?:string):Promise<T|null>; all<T=any>():Promise<{results:T[]}>; run():Promise<any> }\ninterface D1Database { prepare(sql:string):D1Statement; batch(statements:D1Statement[]):Promise<any> }\ninterface R2Bucket { put(key:string,value:ReadableStream|ArrayBuffer|ArrayBufferView|string,options?:any):Promise<any>; delete(key:string):Promise<any> }\nexport interface AsnkEnv {
+interface D1Statement { bind(...values:any[]):D1Statement; first<T=any>(column?:string):Promise<T|null>; all<T=any>():Promise<{results:T[]}>; run():Promise<any> }
+interface D1Database { prepare(sql:string):D1Statement; batch(statements:D1Statement[]):Promise<any> }
+interface R2Bucket { put(key:string,value:ReadableStream|ArrayBuffer|ArrayBufferView|string,options?:any):Promise<any>; delete(key:string):Promise<any> }
+export interface AsnkEnv {
   ASNK_DB: D1Database;
   ASNK_MEDIA: R2Bucket;
 }
