@@ -39,7 +39,7 @@ jobs:
             echo "::error::GitHub repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are required for deployment."
             exit 1
           fi
-          npx wrangler deploy --config .wrangler/deploy/config.json
+          npx wrangler deploy --config dist/server/wrangler.json
 
       - name: Verify deployed Cloudflare Worker routes
         if: github.event_name != 'pull_request'
