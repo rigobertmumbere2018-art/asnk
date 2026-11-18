@@ -39,16 +39,13 @@ jobs:
             echo "::error::GitHub repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are required for deployment."
             exit 1
           fi
-          npx wrangler deploy --config wrangler.jsonc
+          npx wrangler deploy --config .wrangler/deploy/config.json
 
       - name: Verify deployed Cloudflare Worker routes
         if: github.event_name != 'pull_request'
         run: |
           set -e
-          BASE="https://asnk-scouts-nord-kivu.${{ vars.CLOUDFLARE_WORKERS_SUBDOMAIN }}.workers.dev"
-          if [ -z "${{ vars.CLOUDFLARE_WORKERS_SUBDOMAIN }}" ]; then
-            BASE="https://asnk-scouts-nord-kivu.workers.dev"
-          fi
+          BASE="https://asnk-scouts-nord-kivu.rigobertmumbere2018.workers.dev"
           for path in / /actualites /evenements /galerie /mouvement /contact; do
             code=$(curl -sS -o /tmp/asnk-response -w "%{http_code}" "$BASE$path")
             echo "$path -> HTTP $code"
