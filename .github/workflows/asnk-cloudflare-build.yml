@@ -80,13 +80,19 @@ jobs:
           NODE
           npx wrangler deploy --config dist/server/wrangler.json
 
-      - name: Verify deployed Cloudflare Worker routes
+      - name: Diagnose and verify deployed Cloudflare Worker routes
         if: github.event_name != 'pull_request'
         run: |
-          set -e
           BASE="https://asnk-scouts-nord-kivu.rigobertmumbere2018.workers.dev"
-          for path in / /actualites /evenements /galerie /mouvement /contact; do
-            code=$(curl -sS -o /tmp/asnk-response -w "%{http_code}" "$BASE$path")
+          FAILED=0
+          for path in / /index.html /actualites /evenements /galerie /mouvement /contact; do
+            code=$(curl -sS -L -o /tmp/asnk-response -w "%{http_code}" "$BASE$path" || true)
             echo "$path -> HTTP $code"
-            test "$code" = "200"
+            if [ "$code" != "200" ]; then
+              FAILED=1
+              echo "Response preview:"
+              head -c 1200 /tmp/asnk-response || true
+              echo
+            fi
           done
+          exit "$FAILED"
