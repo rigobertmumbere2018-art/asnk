@@ -67,16 +67,29 @@ jobs:
             echo "::error::GitHub repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are required for deployment."
             exit 1
           fi
+          echo "Checking Cloudflare account access before deployment..."
+          ACCOUNT_RESPONSE=$(curl -sS --fail-with-body \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID")
+          echo "$ACCOUNT_RESPONSE" | node --input-type=module -e '
+            let s=""; for await (const c of process.stdin) s+=c;
+            const r=JSON.parse(s);
+            if (!r.success || !r.result?.id) {
+              console.error("Cloudflare rejected CLOUDFLARE_ACCOUNT_ID. Check the GitHub secret.");
+              process.exit(1);
+            }
+            console.log("Cloudflare account verified:", r.result.id);
+          '
           node --input-type=module <<'NODE'
           import fs from "node:fs";
           const p = "dist/server/wrangler.json";
           const config = JSON.parse(fs.readFileSync(p, "utf8"));
-          // The generated TanStack config may retain an account_id from its build
-          // environment. Force the account selected by the GitHub secret.
-          config.account_id = process.env.CLOUDFLARE_ACCOUNT_ID;
+          // Let Wrangler resolve the account from CLOUDFLARE_ACCOUNT_ID.
+          // A stale embedded account_id can cause Cloudflare error 7003.
+          delete config.account_id;
           fs.writeFileSync(p, JSON.stringify(config, null, 2) + "\n");
           console.log("Deploy target:", config.name);
-          console.log("Cloudflare account_id:", config.account_id);
+          console.log("Embedded account_id removed; using verified environment account.");
           NODE
           npx wrangler deploy --config dist/server/wrangler.json
 
