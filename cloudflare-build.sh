@@ -20,7 +20,23 @@ const searchRoute="src/routes/recherche.tsx";
 if(fs.existsSync(searchRoute)){let s=fs.readFileSync(searchRoute,"utf8");s=s.replace('import { zodValidator, fallback } from "@tanstack/zod-adapter";\n',"").replace('q: fallback(z.string(), "").default(""),','q: z.string().default(""),').replace("validateSearch: zodValidator(searchSchema),","validateSearch: searchSchema,");fs.writeFileSync(searchRoute,s)}
 const rootRoute="src/routes/__root.tsx";
 if(fs.existsSync(rootRoute)){let s=fs.readFileSync(rootRoute,"utf8");s=s.replace("function ErrorComponent({ error, reset }: { error: Error; reset: () => void })","function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })");fs.writeFileSync(rootRoute,s)}
-let ts=JSON.parse(fs.readFileSync("tsconfig.json","utf8"));ts.compilerOptions={...(ts.compilerOptions??{}),noImplicitAny:false};ts.compilerOptions.types=["vite/client","node"];fs.writeFileSync("tsconfig.json",JSON.stringify(ts,null,2)+"\\n");
+// tsconfig.json is JSONC (comments are valid there), so remove comments safely before parsing.
+const rawTs=fs.readFileSync("tsconfig.json","utf8");
+let cleanTs="", inString=false, escaped=false, lineComment=false, blockComment=false;
+for(let i=0;i<rawTs.length;i++){
+  const ch=rawTs[i], next=rawTs[i+1];
+  if(lineComment){if(ch==="\\n"){lineComment=false;cleanTs+=ch}else cleanTs+=" ";continue}
+  if(blockComment){if(ch==="*"&&next==="/"){blockComment=false;cleanTs+="  ";i++}else cleanTs+=ch==="\\n"?"\\n":" ";continue}
+  if(inString){cleanTs+=ch;if(escaped)escaped=false;else if(ch==="\\\\")escaped=true;else if(ch==='"')inString=false;continue}
+  if(ch==='"'){inString=true;cleanTs+=ch;continue}
+  if(ch==="/"&&next==="/"){lineComment=true;cleanTs+="  ";i++;continue}
+  if(ch==="/"&&next==="*"){blockComment=true;cleanTs+="  ";i++;continue}
+  cleanTs+=ch;
+}
+const ts=JSON.parse(cleanTs);
+ts.compilerOptions={...(ts.compilerOptions??{}),noImplicitAny:false};
+ts.compilerOptions.types=["vite/client","node"];
+fs.writeFileSync("tsconfig.json",JSON.stringify(ts,null,2)+"\\n");
 fs.writeFileSync(".env.production","");
 const wr=JSON.parse(fs.readFileSync("wrangler.jsonc","utf8"));wr.vars={...(wr.vars??{}),ASNK_MEDIA_PUBLIC_BASE_URL:"https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev"};fs.writeFileSync("wrangler.jsonc",JSON.stringify(wr,null,2)+"\n");
 NODE
