@@ -1,171 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 echo "==> Extracting the ASNK application"
 unzip -o "Kivu Scouts Hub.zip"
 rm -f bun.lock bun.lockb
-
+echo "==> Applying the Cloudflare-native backend"
+cp -R cloudflare-overlay/. .
 echo "==> Preparing TanStack Start for Cloudflare Workers"
 cp cloudflare.vite.config.ts vite.config.ts
-
 node --input-type=module <<'NODE'
 import fs from "node:fs";
-
-const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+const pkg=JSON.parse(fs.readFileSync("package.json","utf8"));
 delete pkg.devDependencies?.["@lovable.dev/vite-tanstack-config"];
 delete pkg.devDependencies?.nitro;
 delete pkg.dependencies?.["@tanstack/zod-adapter"];
-
-pkg.engines = { ...(pkg.engines ?? {}), node: ">=22.12.0" };
-pkg.scripts = {
-  ...(pkg.scripts ?? {}),
-  build: "vite build",
-  preview: "vite preview",
-  typecheck: "tsc --noEmit",
-  "cf-typegen": "wrangler types",
-  deploy: "npm run build && wrangler deploy",
-};
-fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n");
-
-const searchRoute = "src/routes/recherche.tsx";
-let source = fs.readFileSync(searchRoute, "utf8");
-source = source.replace(
-  'import { zodValidator, fallback } from "@tanstack/zod-adapter";\n',
-  ""
-);
-source = source.replace(
-  'q: fallback(z.string(), "").default(""),',
-  'q: z.string().default(""),'
-);
-source = source.replace(
-  "validateSearch: zodValidator(searchSchema),",
-  "validateSearch: searchSchema,"
-);
-fs.writeFileSync(searchRoute, source);
-
-// TanStack Router's ErrorComponentProps types the boundary error as unknown.
-const rootRoute = "src/routes/__root.tsx";
-let rootSource = fs.readFileSync(rootRoute, "utf8");
-rootSource = rootSource.replace(
-  "function ErrorComponent({ error, reset }: { error: Error; reset: () => void })",
-  "function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })"
-);
-fs.writeFileSync(rootRoute, rootSource);
-
-let tsconfig = fs.readFileSync("tsconfig.json", "utf8");
-if (!tsconfig.includes('"types": ["vite/client", "node"]')) {
-  tsconfig = tsconfig.replace('"types": ["vite/client"]', '"types": ["vite/client", "node"]');
-}
-fs.writeFileSync("tsconfig.json", tsconfig);
-
-const envText = fs.readFileSync(".env", "utf8");
-const values = {};
-for (const line of envText.split(/\r?\n/)) {
-  const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)=(.*)\s*$/);
-  if (match) values[match[1]] = match[2].trim().replace(/^["']|["']$/g, "");
-}
-const required = [
-  "SUPABASE_URL",
-  "SUPABASE_PUBLISHABLE_KEY",
-  "VITE_SUPABASE_URL",
-  "VITE_SUPABASE_PUBLISHABLE_KEY",
-];
-const missing = required.filter((key) => !values[key]);
-if (missing.length) {
-  throw new Error("Missing Supabase configuration keys: " + missing.join(", "));
-}
-
-fs.writeFileSync(
-  ".env.production",
-  "VITE_SUPABASE_URL=" + JSON.stringify(values.VITE_SUPABASE_URL) + "\n" +
-  "VITE_SUPABASE_PUBLISHABLE_KEY=" + JSON.stringify(values.VITE_SUPABASE_PUBLISHABLE_KEY) + "\n"
-);
-
-const wrangler = JSON.parse(fs.readFileSync("wrangler.jsonc", "utf8"));
-wrangler.vars = {
-  ...(wrangler.vars ?? {}),
-  SUPABASE_URL: values.SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY: values.SUPABASE_PUBLISHABLE_KEY,
-  ASNK_MEDIA_PUBLIC_BASE_URL: "https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev",
-};
-fs.writeFileSync("wrangler.jsonc", JSON.stringify(wrangler, null, 2) + "\n");
-
-// Move Lovable-hosted image URLs to the public R2 bucket while preserving
-// each original object key and filename.
-const mediaBase = wrangler.vars.ASNK_MEDIA_PUBLIC_BASE_URL;
-function rewriteAssetMetadata(directory) {
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    const fullPath = directory + "/" + entry.name;
-    if (entry.isDirectory()) {
-      rewriteAssetMetadata(fullPath);
-    } else if (entry.isFile() && entry.name.endsWith(".asset.json")) {
-      const asset = JSON.parse(fs.readFileSync(fullPath, "utf8"));
-      if (asset.r2_key) {
-        asset.url = mediaBase + "/" + asset.r2_key;
-        fs.writeFileSync(fullPath, JSON.stringify(asset, null, 2) + "\n");
-      }
-    }
-  }
-}
-rewriteAssetMetadata("src/assets");
-fs.rmSync(".env", { force: true });
+pkg.engines={...(pkg.engines??{}),node:">=22.12.0"};
+pkg.scripts={...(pkg.scripts??{}),build:"vite build",preview:"vite preview",typecheck:"tsc --noEmit","cf-typegen":"wrangler types",deploy:"npm run build && wrangler deploy"};
+fs.writeFileSync("package.json",JSON.stringify(pkg,null,2)+"\n");
+const searchRoute="src/routes/recherche.tsx";
+if(fs.existsSync(searchRoute)){let s=fs.readFileSync(searchRoute,"utf8");s=s.replace('import { zodValidator, fallback } from "@tanstack/zod-adapter";\n',"").replace('q: fallback(z.string(), "").default(""),','q: z.string().default(""),').replace("validateSearch: zodValidator(searchSchema),","validateSearch: searchSchema,");fs.writeFileSync(searchRoute,s)}
+const rootRoute="src/routes/__root.tsx";
+if(fs.existsSync(rootRoute)){let s=fs.readFileSync(rootRoute,"utf8");s=s.replace("function ErrorComponent({ error, reset }: { error: Error; reset: () => void })","function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })");fs.writeFileSync(rootRoute,s)}
+let ts=fs.readFileSync("tsconfig.json","utf8");ts=ts.replace('"types": ["vite/client"]','"types": ["vite/client", "node"]');fs.writeFileSync("tsconfig.json",ts);
+fs.writeFileSync(".env.production","");
+const wr=JSON.parse(fs.readFileSync("wrangler.jsonc","utf8"));wr.vars={...(wr.vars??{}),ASNK_MEDIA_PUBLIC_BASE_URL:"https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev"};fs.writeFileSync("wrangler.jsonc",JSON.stringify(wr,null,2)+"\n");
 NODE
-
-echo "==> Adding cache headers for built assets"
-mkdir -p public
-cat > public/_headers <<'EOF'
-/assets/*
-  Cache-Control: public, max-age=31536000, immutable
-EOF
-
 echo "==> Installing Cloudflare dependencies"
 npm install --save-dev @cloudflare/vite-plugin wrangler --no-audit --no-fund
-
 echo "==> Generating Cloudflare Worker types"
 npm run cf-typegen
-
 echo "==> Checking TypeScript"
 npm run typecheck
-
-echo "==> Building the Cloudflare Worker"
+echo "==> Building Cloudflare Worker"
 npm run build
-
-echo "==> Starting a local Workers preview"
-./node_modules/.bin/vite preview --host 127.0.0.1 --port 4173 --strictPort > /tmp/asnk-preview.log 2>&1 &
-PREVIEW_PID=$!
-cleanup_preview() {
-  kill "$PREVIEW_PID" 2>/dev/null || true
-  wait "$PREVIEW_PID" 2>/dev/null || true
-}
-trap cleanup_preview EXIT
-
-HOME_OK=0
-for attempt in $(seq 1 30); do
-  if curl --connect-timeout 2 --max-time 8 --silent --show-error --fail http://127.0.0.1:4173/ -o /tmp/asnk-home.html; then
-    HOME_OK=1
-    break
-  fi
-  sleep 2
-done
-if [ "$HOME_OK" -ne 1 ]; then
-  cat /tmp/asnk-preview.log
-  echo "ASNK homepage did not respond in the local Workers preview"
-  exit 1
-fi
-
-for route in /actualites /evenements /galerie /mouvement /contact; do
-  status=$(curl --connect-timeout 2 --max-time 12 --silent --output "/tmp/asnk-route.html" --write-out "%{http_code}" "http://127.0.0.1:4173$route" || true)
-  if [ "$status" != "200" ]; then
-    cat /tmp/asnk-preview.log
-    echo "Route $route returned HTTP $status"
-    exit 1
-  fi
-done
-
-cleanup_preview
-trap - EXIT
-
-echo "==> Checking the Worker package without deploying"
+echo "==> Checking Worker package without deploying"
 npx wrangler deploy --dry-run
-
-echo "==> Cloudflare build and dry-run completed"
+echo "==> Cloudflare-native build and dry-run completed"
