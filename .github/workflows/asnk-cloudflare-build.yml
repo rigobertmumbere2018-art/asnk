@@ -74,7 +74,7 @@ jobs:
           // The generated TanStack config may retain an account_id from its build
           // environment. Force the account selected by the GitHub secret.
           config.account_id = process.env.CLOUDFLARE_ACCOUNT_ID;
-          fs.writeFileSync(p, JSON.stringify(config, null, 2) + "\\n");
+          fs.writeFileSync(p, JSON.stringify(config, null, 2) + "\n");
           console.log("Deploy target:", config.name);
           console.log("Cloudflare account_id:", config.account_id);
           NODE
