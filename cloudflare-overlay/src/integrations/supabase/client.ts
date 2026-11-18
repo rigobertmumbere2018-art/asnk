@@ -23,7 +23,7 @@ class Query implements PromiseLike<Result<any>>{
  then<TResult1=Result<any>,TResult2=never>(onfulfilled?:((value:Result<any>)=>TResult1|PromiseLike<TResult1>)|null,onrejected?:((reason:any)=>TResult2|PromiseLike<TResult2>)|null):PromiseLike<TResult1|TResult2>{return this.execute().then(onfulfilled,onrejected)}
  private async execute():Promise<Result<any>>{try{const result=await request<{data:any;count?:number}>("/api/db",{method:"POST",body:JSON.stringify({table:this.table,op:this.op,values:this.values,filters:this.filters,order:this.sort,limit:this.max})});let data=result.data;if(this.cardinality!=="many"&&Array.isArray(data)){if(data.length>1&&this.cardinality==="single")throw new Error("Plusieurs résultats retournés");data=data[0]??null;if(data===null&&this.cardinality==="single")throw new Error("Aucun résultat");}return {data,error:null,count:result.count}}catch(e){return {data:null,error:{message:e instanceof Error?e.message:"Erreur inconnue"}}}}
 }
-const listeners=new Map<string,()=>void>();
+const activeChannels=new Set<any>();
 const auth={
  async getSession(){try{const r=await request<any>("/api/auth/session");return {data:{session:r.user?{user:r.user,access_token:"cloudflare-session",token_type:"bearer"}:null},error:null}}catch(e){return {data:{session:null},error:{message:String(e)}}}},
  async getUser(){try{const r=await request<any>("/api/auth/session");return {data:{user:r.user??null},error:null}}catch(e){return {data:{user:null},error:{message:String(e)}}}},
@@ -33,4 +33,12 @@ const auth={
  async resetPasswordForEmail(){return {error:{message:"La réinitialisation par email sera activée après configuration du service d'envoi ASNK."}}}
 };
 const storage={from(bucket:string){return {async upload(path:string,file:File){try{const form=new FormData();form.append("file",file);form.append("path",path);form.append("bucket",bucket);const r=await fetch("/api/storage/upload",{method:"POST",body:form,credentials:"same-origin"});const d=await r.json();if(!r.ok)throw new Error(d.error);return {data:{path},error:null}}catch(e){return {data:null,error:{message:String(e)}}}},async createSignedUrl(path:string){return {data:{signedUrl:path.startsWith("http")?path:"https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev/"+path},error:null}},async remove(paths:string[]){try{await request("/api/storage/delete",{method:"POST",body:JSON.stringify({bucket,paths})});return {data:[],error:null}}catch(e){return {data:null,error:{message:String(e)}}}}}}};
-export const supabase:any={from:(table:string)=>new Query(table),auth,storage,channel:(name:string)=>({on(_event:string,_filter:any,callback:()=>void){listeners.set(name,callback);return this},subscribe(){return this}}),removeChannel:async()=>({})};
+class PollChannel{
+ private handlers:{event:string;filter:any;callback:(payload:any)=>void}[]=[];
+ private timer:any=null;private snapshot:any[]=[];
+ on(_type:string,filter:any,callback:(payload:any)=>void){this.handlers.push({event:filter?.event??"*",filter,callback});return this}
+ subscribe(){if(this.timer)return this;this.timer=setInterval(()=>void this.poll(),4000);activeChannels.add(this);return this}
+ private async poll(){const h=this.handlers[0];if(!h?.filter?.table)return;try{const r=await request<any>("/api/db",{method:"POST",body:JSON.stringify({table:h.filter.table,op:"select",filters:[],limit:300,order:{column:"created_at",ascending:true}})});const next=r.data??[];if(this.snapshot.length){const before=new Map(this.snapshot.map((x:any)=>[x.id,x]));const after=new Map(next.map((x:any)=>[x.id,x]));for(const row of next){if(!before.has(row.id))for(const item of this.handlers)if(item.event==="*"||item.event==="INSERT")item.callback({eventType:"INSERT",new:row,old:{}})}for(const row of this.snapshot){if(!after.has(row.id))for(const item of this.handlers)if(item.event==="*"||item.event==="DELETE")item.callback({eventType:"DELETE",new:{},old:row})}}this.snapshot=next}catch{}}
+ unsubscribe(){if(this.timer)clearInterval(this.timer);this.timer=null;activeChannels.delete(this);return Promise.resolve("ok")}
+}
+export const supabase:any={from:(table:string)=>new Query(table),auth,storage,channel:(_name:string)=>new PollChannel(),removeChannel:async(channel:any)=>channel?.unsubscribe?.()};
