@@ -1,4 +1,4 @@
-export interface AsnkEnv {
+interface D1Statement { bind(...values:any[]):D1Statement; first<T=any>(column?:string):Promise<T|null>; all<T=any>():Promise<{results:T[]}>; run():Promise<any> }\ninterface D1Database { prepare(sql:string):D1Statement; batch(statements:D1Statement[]):Promise<any> }\ninterface R2Bucket { put(key:string,value:ReadableStream|ArrayBuffer|ArrayBufferView|string,options?:any):Promise<any>; delete(key:string):Promise<any> }\nexport interface AsnkEnv {
   ASNK_DB: D1Database;
   ASNK_MEDIA: R2Bucket;
 }
@@ -22,7 +22,7 @@ const PUBLIC_INSERT = new Set(["inscriptions"]);
 const json = (data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store"}});
 const uid=()=>crypto.randomUUID();
 async function digest(value:string){const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value));return [...new Uint8Array(bytes)].map(x=>x.toString(16).padStart(2,"0")).join("")}
-async function passwordHash(password:string,salt=crypto.randomUUID()){const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]);const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:new TextEncoder().encode(salt),iterations:210000,hash:"SHA-256"},key,256);return "pbkdf2$210000$"+salt+"$"+btoa(String.fromCharCode(...new Uint8Array(bits)))}
+async function passwordHash(password:string,salt:string=crypto.randomUUID()){const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]);const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:new TextEncoder().encode(salt),iterations:210000,hash:"SHA-256"},key,256);return "pbkdf2$210000$"+salt+"$"+btoa(String.fromCharCode(...new Uint8Array(bits)))}
 async function verifyPassword(password:string,stored:string){const [kind,rounds,salt,hash]=stored.split("$");if(kind!=="pbkdf2"||!rounds||!salt||!hash)return false;const candidate=await passwordHash(password,salt);return candidate===stored}
 async function currentUser(request:Request,db:D1Database):Promise<User|null>{const token=request.headers.get("cookie")?.split(";").map(x=>x.trim()).find(x=>x.startsWith("asnk_session="))?.slice(13);if(!token)return null;const tokenHash=await digest(token);const row=await db.prepare("SELECT u.id,u.email,p.full_name FROM sessions s JOIN users u ON u.id=s.user_id LEFT JOIN profiles p ON p.id=u.id WHERE s.token_hash=? AND s.expires_at>? AND u.disabled=0").bind(tokenHash,new Date().toISOString()).first<any>();if(!row)return null;const roles=await db.prepare("SELECT role FROM user_roles WHERE user_id=?").bind(row.id).all<any>();return {...row,roles:(roles.results??[]).map((r:any)=>r.role)}}
 const admin=(u:User|null)=>!!u&&u.roles.some(r=>r==="admin"||r==="super_admin");

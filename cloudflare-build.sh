@@ -20,7 +20,7 @@ const searchRoute="src/routes/recherche.tsx";
 if(fs.existsSync(searchRoute)){let s=fs.readFileSync(searchRoute,"utf8");s=s.replace('import { zodValidator, fallback } from "@tanstack/zod-adapter";\n',"").replace('q: fallback(z.string(), "").default(""),','q: z.string().default(""),').replace("validateSearch: zodValidator(searchSchema),","validateSearch: searchSchema,");fs.writeFileSync(searchRoute,s)}
 const rootRoute="src/routes/__root.tsx";
 if(fs.existsSync(rootRoute)){let s=fs.readFileSync(rootRoute,"utf8");s=s.replace("function ErrorComponent({ error, reset }: { error: Error; reset: () => void })","function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })");fs.writeFileSync(rootRoute,s)}
-let ts=fs.readFileSync("tsconfig.json","utf8");ts=ts.replace('"types": ["vite/client"]','"types": ["vite/client", "node"]');fs.writeFileSync("tsconfig.json",ts);
+let ts=JSON.parse(fs.readFileSync("tsconfig.json","utf8"));ts.compilerOptions={...(ts.compilerOptions??{}),noImplicitAny:false};ts.compilerOptions.types=["vite/client","node"];fs.writeFileSync("tsconfig.json",JSON.stringify(ts,null,2)+"\\n");
 fs.writeFileSync(".env.production","");
 const wr=JSON.parse(fs.readFileSync("wrangler.jsonc","utf8"));wr.vars={...(wr.vars??{}),ASNK_MEDIA_PUBLIC_BASE_URL:"https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev"};fs.writeFileSync("wrangler.jsonc",JSON.stringify(wr,null,2)+"\n");
 NODE
