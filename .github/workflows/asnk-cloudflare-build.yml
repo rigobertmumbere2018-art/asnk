@@ -29,6 +29,34 @@ jobs:
       - name: Build and validate ASNK for Cloudflare
         run: bash cloudflare-build.sh
 
+      - name: Preserve build output for deployment diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asnk-cloudflare-build-output
+          path: |
+            dist/server/
+            dist/client/
+            wrangler.jsonc
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Show generated Worker configuration (non-sensitive)
+        if: success()
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const p = "dist/server/wrangler.json";
+          if (!fs.existsSync(p)) {
+            console.log("Generated Wrangler config not found:", p);
+            process.exit(0);
+          }
+          const c = JSON.parse(fs.readFileSync(p, "utf8"));
+          for (const k of ["name", "main", "compatibility_date", "compatibility_flags", "assets", "legacy_env", "workers_dev", "routes", "services", "r2_buckets", "d1_databases"]) {
+            if (c[k] !== undefined) console.log(k + ":", JSON.stringify(c[k]));
+          }
+          NODE
+
       - name: Publish the real ASNK application Worker
         if: github.event_name != 'pull_request'
         env:
