@@ -11,7 +11,22 @@ fs.mkdirSync(publicDir,{recursive:true});
 // SVG favicon: compact ASNK shield mark, served directly by Cloudflare's static assets.
 const favicon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#123b68"/><path d="M32 7 53 15v17c0 13-8 21-21 26C19 53 11 45 11 32V15z" fill="#fff" stroke="#d5ad45" stroke-width="2"/><path d="M32 16 35.8 27.5 48 27.5 38.1 34.7 41.9 46 32 39 22.1 46 25.9 34.7 16 27.5 28.2 27.5z" fill="#123b68"/><text x="32" y="57" font-family="Arial,sans-serif" font-size="6" font-weight="700" text-anchor="middle" fill="#fff">ASNK</text></svg>`;
 fs.writeFileSync(path.join(publicDir,"favicon.svg"),favicon);
-fs.writeFileSync(path.join(publicDir,"favicon.ico"),favicon);
+
+// Real 16x16 ICO fallback for browsers requesting /favicon.ico.
+const w=16,h=16, header=Buffer.alloc(40);
+header.writeUInt32LE(40,0); header.writeInt32LE(w,4); header.writeInt32LE(h*2,8);
+header.writeUInt16LE(1,12); header.writeUInt16LE(32,14);
+header.writeUInt32LE(w*h*4,20);
+const pixels=Buffer.alloc(w*h*4);
+for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+ const p=(y*w+x)*4; const edge=x<2||x>13||y<2||y>13;
+ pixels[p]=edge?45:104; pixels[p+1]=edge?70:59; pixels[p+2]=edge?18:18; pixels[p+3]=255;
+}
+const mask=Buffer.alloc(Math.ceil(w/32)*4*h);
+const dir=Buffer.alloc(22); dir.writeUInt16LE(0,0); dir.writeUInt16LE(1,2);
+dir.writeUInt8(w,6); dir.writeUInt8(h,7); dir.writeUInt16LE(1,10); dir.writeUInt16LE(32,12);
+dir.writeUInt32LE(header.length+pixels.length+mask.length,14); dir.writeUInt32LE(22,18);
+fs.writeFileSync(path.join(publicDir,"favicon.ico"),Buffer.concat([dir,header,pixels,mask]));
 const root="src/routes/__root.tsx";
 if(fs.existsSync(root)){
  let s=fs.readFileSync(root,"utf8");
