@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { Facebook, Instagram, Mail, MapPin, Phone, Youtube } from "lucide-react";
-import logo from "@/assets/asnk-logo.jpg.asset.json";
 
 export function SiteFooter() {
   return (
@@ -9,7 +8,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 lg:grid-cols-4 lg:px-8">
         <div className="lg:col-span-1">
           <Link to="/" className="flex items-center gap-3 text-white">
-            <img src={logo.url} alt="Logo ASNK" className="size-12 rounded-md object-contain" />
+            <img src="/favicon.svg" alt="Logo ASNK" className="size-12 rounded-md object-contain" />
             <span className="font-semibold leading-tight">ASNK</span>
           </Link>
           <p className="mt-4 max-w-xs text-sm text-white/60">

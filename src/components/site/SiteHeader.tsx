@@ -2,7 +2,6 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Menu, X, Search } from "lucide-react";
-import logo from "@/assets/asnk-logo.jpg.asset.json";
 
 const NAV = [
   { to: "/", label: "Accueil" },
@@ -49,7 +48,7 @@ export function SiteHeader() {
           )}
         >
           <img
-            src={logo.url}
+            src="/favicon.svg"
             alt="Logo ASNK — Association des Scouts du Nord-Kivu"
             className={cn(
               "rounded-md object-contain transition-all",
