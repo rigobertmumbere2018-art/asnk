@@ -17,7 +17,7 @@ export const Route = createFileRoute("/auth")({
 
 const schema = z.object({
   email: z.string().trim().email("Email invalide").max(200),
-  password: z.string().min(6, "Au moins 6 caractères").max(72),
+  password: z.string().min(10, "Au moins 10 caractères").max(128),
 });
 
 function Page() {
@@ -117,7 +117,7 @@ function Page() {
           <p className="mt-1 text-sm text-white/55">
             {mode === "login" && "Entrez vos identifiants pour accéder à votre espace."}
             {mode === "signup" && "Quelques secondes suffisent."}
-            {mode === "forgot" && "Recevez un lien sécurisé par email."}
+            {mode === "forgot" && "L’envoi automatique des liens n’est pas encore configuré. Contactez l’administration pour récupérer votre accès."}
           </p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
@@ -168,7 +168,7 @@ function Page() {
               {loading && <Loader2 className="size-4 animate-spin" />}
               {mode === "login" && "Se connecter"}
               {mode === "signup" && "Créer mon compte"}
-              {mode === "forgot" && "Envoyer le lien"}
+              {mode === "forgot" && "Retour à la connexion"}
             </button>
 
             {mode === "forgot" && (
