@@ -30,6 +30,8 @@ const auth={
  async getUser(){try{const r=await request<any>("/api/auth/session");return {data:{user:r.user??null},error:null}}catch(e){return {data:{user:null},error:{message:String(e)}}}},
  async signInWithPassword({email,password,remember}:any){try{const r=await request<any>("/api/auth/login",{method:"POST",body:JSON.stringify({email,password,remember:remember!==false})});return {data:{user:r.user,session:{user:r.user,access_token:"cloudflare-session"}},error:null}}catch(e){return {data:{user:null,session:null},error:{message:e instanceof Error?e.message:"Connexion impossible"}}}},
  async signUp({email,password,options}:any){try{const r=await request<any>("/api/auth/signup",{method:"POST",body:JSON.stringify({email,password,full_name:options?.data?.full_name})});return {data:{user:{email},session:null},error:null}}catch(e){return {data:{user:null,session:null},error:{message:e instanceof Error?e.message:"Inscription impossible"}}}},
+ onAuthStateChange(_callback:(event:string,session:any)=>void){return {data:{subscription:{unsubscribe(){}}}}},
+ async updateUser(attributes:any){try{const r=await request<any>("/api/auth/update-password",{method:"POST",body:JSON.stringify({password:attributes?.password})});return {data:{user:null},error:null}}catch(e){return {data:{user:null},error:{message:e instanceof Error?e.message:"Modification impossible"}}}},
  async signOut(){try{await request("/api/auth/logout",{method:"POST",body:"{}"});return {error:null}}catch(e){return {error:{message:String(e)}}}},
  async resetPasswordForEmail(){return {error:{message:"La réinitialisation par email sera activée après configuration du service d'envoi ASNK."}}}
 };
