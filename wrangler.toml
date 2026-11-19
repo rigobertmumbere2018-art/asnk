@@ -1,0 +1,25 @@
+name = "asnk-scouts-nord-kivu"
+main = ".output/server/index.mjs"
+compatibility_date = "2026-11-17"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[assets]
+directory = ".output/public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "ASNK_DB"
+database_name = "asnk-scouts-db"
+database_id = "22fa56ef-8d49-4acc-9296-5ac546d4c0d9"
+
+[[r2_buckets]]
+binding = "ASNK_MEDIA"
+bucket_name = "asnk-media"
+
+[vars]
+ASNK_MEDIA_PUBLIC_BASE_URL = "https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev"
+
+[observability]
+enabled = true
