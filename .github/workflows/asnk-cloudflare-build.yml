@@ -1,0 +1,109 @@
+name: ASNK Cloudflare build and deploy
+
+on:
+  push:
+    branches:
+      - cloudflare-ready
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    name: Build, validate and deploy ASNK Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+
+      - name: Build and validate ASNK for Cloudflare
+        run: bash cloudflare-build.sh
+
+      - name: Preserve build output for deployment diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asnk-cloudflare-build-output
+          path: |
+            dist/server/
+            dist/client/
+            wrangler.jsonc
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Show generated Worker configuration (non-sensitive)
+        if: success()
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const p = "dist/server/wrangler.json";
+          if (!fs.existsSync(p)) {
+            console.log("Generated Wrangler config not found:", p);
+            process.exit(0);
+          }
+          const c = JSON.parse(fs.readFileSync(p, "utf8"));
+          for (const k of ["name", "main", "compatibility_date", "compatibility_flags", "assets", "legacy_env", "workers_dev", "routes", "services", "r2_buckets", "d1_databases"]) {
+            if (c[k] !== undefined) console.log(k + ":", JSON.stringify(c[k]));
+          }
+          NODE
+
+      - name: Publish the real ASNK application Worker
+        if: github.event_name != 'pull_request'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 3453b4d54fc81067b4cc62eb7c117739
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::GitHub repository secret CLOUDFLARE_API_TOKEN is required for deployment."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const p = "dist/server/wrangler.json";
+          const config = JSON.parse(fs.readFileSync(p, "utf8"));
+          // Pin the verified Cloudflare account ID; the GitHub secret previously
+          // contained a stale/incorrect value and caused API error 7003.
+          config.account_id = process.env.CLOUDFLARE_ACCOUNT_ID;
+          fs.writeFileSync(p, JSON.stringify(config, null, 2) + "\n");
+          console.log("Deploy target:", config.name);
+          console.log("Embedded account_id removed; using verified environment account.");
+          NODE
+          npx wrangler deploy --config dist/server/wrangler.json
+
+      - name: Verify public ASNK pages and assets
+        if: github.event_name != 'pull_request'
+        run: |
+          set -e
+          BASE="https://asnk-scouts-nord-kivu.rigobertmumbere2018.workers.dev"
+          for path in / /actualites /evenements /galerie /mouvement /contact; do
+            code=$(curl -sS -L -o /tmp/asnk-response -w "%{http_code}" "$BASE$path")
+            echo "$path -> HTTP $code"
+            if [ "$code" != "200" ]; then
+              echo "Response preview:"
+              head -c 1200 /tmp/asnk-response || true
+              exit 1
+            fi
+          done
+          CSS=$(grep -oE 'href="/assets/[^"]+\.css"' /tmp/asnk-response | head -1 | cut -d'"' -f2 || true)
+          if [ -n "$CSS" ]; then
+            code=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE$CSS")
+            echo "CSS $CSS -> HTTP $code"
+            test "$code" = "200"
+          else
+            echo "No CSS reference found on the last page response"
+            exit 1
+          fi
+          IMAGE="https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev/a/v1/576f8e4d-1ed9-4839-9a34-ca86e6082572/c79e0e64-c755-40b4-beb8-642308358f38/asnk-logo.jpg"
+          code=$(curl -sS -o /dev/null -w "%{http_code}" "$IMAGE")
+          echo "R2 logo image -> HTTP $code"
+          test "$code" = "200"
