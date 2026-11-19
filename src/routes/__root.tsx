@@ -110,10 +110,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         <HeadContent />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" /><link rel="alternate icon" href="/favicon.ico?v=2" /><link rel="apple-touch-icon" href="/favicon.svg?v=2" />
+    <link rel="icon" type="image/jpeg" href="https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev/a/v1/576f8e4d-1ed9-4839-9a34-ca86e6082572/c79e0e64-c755-40b4-beb8-642308358f38/asnk-logo.jpg" /><link rel="apple-touch-icon" href="https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev/a/v1/576f8e4d-1ed9-4839-9a34-ca86e6082572/c79e0e64-c755-40b4-beb8-642308358f38/asnk-logo.jpg" />
       </head>
       <body>
         {children}

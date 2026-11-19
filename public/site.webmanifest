@@ -1,1 +1,16 @@
-{"name":"Association des Scouts du Nord-Kivu","short_name":"ASNK","icons":[{"src":"/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/icon-512.png","sizes":"512x512","type":"image/png"}],"theme_color":"#0f1b3d","background_color":"#0f1b3d","display":"browser","start_url":"/"}
+{
+  "name": "Association des Scouts du Nord-Kivu",
+  "short_name": "ASNK",
+  "icons": [
+    {
+      "src": "https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev/a/v1/576f8e4d-1ed9-4839-9a34-ca86e6082572/c79e0e64-c755-40b4-beb8-642308358f38/asnk-logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#0f1b3d",
+  "background_color": "#0f1b3d",
+  "display": "standalone",
+  "start_url": "/"
+}
