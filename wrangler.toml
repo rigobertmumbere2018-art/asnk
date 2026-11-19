@@ -1,0 +1,37 @@
+name = "asnk-scouts-nord-kivu"
+main = ".output/server/index.mjs"
+compatibility_date = "2026-11-17"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[assets]
+directory = ".output/public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "ASNK_DB"
+database_name = "asnk-scouts-db"
+database_id = "22fa56ef-8d49-4acc-9296-5ac546d4c0d9"
+
+[[r2_buckets]]
+binding = "ASNK_MEDIA"
+bucket_name = "asnk-media"
+
+[vars]
+ASNK_MEDIA_PUBLIC_BASE_URL = "https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev"
+
+[observability]
+enabled = true
+
+[previews.vars]
+ASNK_MEDIA_PUBLIC_BASE_URL = "https://pub-25a0e2725c7b45a7a4aa799adcf98e51.r2.dev"
+
+[[previews.d1_databases]]
+binding = "ASNK_DB"
+database_name = "asnk-scouts-preview-db"
+database_id = "05f272a9-3d81-4f4c-8cf2-0c27cf465e9c"
+
+[[previews.r2_buckets]]
+binding = "ASNK_MEDIA"
+bucket_name = "asnk-scouts-preview-media"
