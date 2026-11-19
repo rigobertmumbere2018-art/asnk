@@ -168,7 +168,7 @@ function Page() {
               {loading && <Loader2 className="size-4 animate-spin" />}
               {mode === "login" && "Se connecter"}
               {mode === "signup" && "Créer mon compte"}
-              {mode === "forgot" && "Retour à la connexion"}
+              {mode === "forgot" && "Envoyer le lien"}
             </button>
 
             {mode === "forgot" && (
