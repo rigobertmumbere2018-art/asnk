@@ -32,8 +32,8 @@ if(fs.existsSync(root)){
  let s=fs.readFileSync(root,"utf8");
  const iconLinks='<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" /><link rel="alternate icon" href="/favicon.ico?v=2" /><link rel="apple-touch-icon" href="/favicon.svg?v=2" />';
  if(!s.includes('href="/favicon.svg')){
-   if(s.includes("<HeadContent />")) s=s.replace("<HeadContent />", "<HeadContent />\\n    "+iconLinks);
-   else if(s.includes("<HeadContent/>")) s=s.replace("<HeadContent/>", "<HeadContent/>\\n    "+iconLinks);
+   if(s.includes("<HeadContent />")) s=s.replace("<HeadContent />", "<HeadContent />\n    "+iconLinks);
+   else if(s.includes("<HeadContent/>")) s=s.replace("<HeadContent/>", "<HeadContent/>\n    "+iconLinks);
    else if(s.includes("</head>")) s=s.replace("</head>", iconLinks+"</head>");
    else throw new Error("Impossible d'ajouter le favicon : structure head de __root.tsx non reconnue");
  }
@@ -56,7 +56,7 @@ figure img, .gallery img, [class*="gallery"] img { display: block; width: 100%; 
 }
 `;
  let styles=fs.readFileSync(css,"utf8");
- if(!styles.includes("ASNK media presentation")) styles+="\\n"+rules+"\\n";
+ if(!styles.includes("ASNK media presentation")) styles+="\n"+rules+"\n";
  fs.writeFileSync(css,styles);
 }
 ASNK_BRANDING
@@ -83,8 +83,8 @@ const rawTs=fs.readFileSync("tsconfig.json","utf8");
 let cleanTs="", inString=false, escaped=false, lineComment=false, blockComment=false;
 for(let i=0;i<rawTs.length;i++){
   const ch=rawTs[i], next=rawTs[i+1];
-  if(lineComment){if(ch==="\\n"){lineComment=false;cleanTs+=ch}else cleanTs+=" ";continue}
-  if(blockComment){if(ch==="*"&&next==="/"){blockComment=false;cleanTs+="  ";i++}else cleanTs+=ch==="\\n"?"\\n":" ";continue}
+  if(lineComment){if(ch==="\n"){lineComment=false;cleanTs+=ch}else cleanTs+=" ";continue}
+  if(blockComment){if(ch==="*"&&next==="/"){blockComment=false;cleanTs+="  ";i++}else cleanTs+=ch==="\n"?"\n":" ";continue}
   if(inString){cleanTs+=ch;if(escaped)escaped=false;else if(ch==="\\\\")escaped=true;else if(ch==='"')inString=false;continue}
   if(ch==='"'){inString=true;cleanTs+=ch;continue}
   if(ch==="/"&&next==="/"){lineComment=true;cleanTs+="  ";i++;continue}
