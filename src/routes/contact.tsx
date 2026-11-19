@@ -4,6 +4,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -42,15 +43,31 @@ function Page() {
         </Reveal>
         <Reveal delay={150}>
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
+              if (sending) return;
               setSending(true);
               const form = e.currentTarget;
-              setTimeout(() => {
-                setSending(false);
-                toast.success("Message envoyé. Nous vous répondrons rapidement.");
-                form.reset();
-              }, 700);
+              const values = new FormData(form);
+              const name = String(values.get("name") ?? "").trim();
+              const email = String(values.get("email") ?? "").trim();
+              const subject = String(values.get("subject") ?? "").trim();
+              const message = String(values.get("message") ?? "").trim();
+              const { error } = await supabase.from("inscriptions").insert({
+                type: "contact",
+                status: "en_attente",
+                full_name: name,
+                email,
+                message: message,
+                data: { subject, source: "formulaire_contact" },
+              });
+              setSending(false);
+              if (error) {
+                toast.error("Le message n'a pas pu être enregistré. Réessayez dans quelques instants.");
+                return;
+              }
+              toast.success("Votre message a bien été transmis à l'ASNK.");
+              form.reset();
             }}
             className="space-y-4 rounded-3xl border border-white/10 bg-card p-7"
           >
