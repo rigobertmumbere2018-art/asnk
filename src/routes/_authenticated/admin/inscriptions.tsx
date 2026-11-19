@@ -14,6 +14,8 @@ type Inscription = {
   city: string | null;
   status: string;
   created_at: string;
+  message?: string | null;
+  data?: { subject?: string } | null;
 };
 
 export const Route = createFileRoute("/_authenticated/admin/inscriptions")({
@@ -53,12 +55,12 @@ function Page() {
     <div className="px-5 py-10 lg:px-10 lg:py-12">
       <AdminPageHeader
         eyebrow="Membres"
-        title="Demandes d'inscription"
-        description="Validez ou refusez les demandes reçues via le formulaire public."
+        title="Demandes et messages reçus"
+        description="Consultez les inscriptions et les messages transmis depuis le formulaire de contact."
       />
 
       <div className="mt-6 flex flex-wrap gap-2">
-        {["all", "membre", "groupe", "donateur", "partenaire"].map((t) => (
+        {["all", "membre", "groupe", "donateur", "partenaire", "contact"].map((t) => (
           <button
             key={t}
             onClick={() => setFilter(t)}
@@ -81,6 +83,7 @@ function Page() {
                   <th className="p-4">Nom</th>
                   <th className="p-4">Email</th>
                   <th className="p-4">Ville</th>
+                  <th className="p-4">Message / Sujet</th>
                   <th className="p-4">Statut</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
@@ -88,7 +91,7 @@ function Page() {
               <tbody className="divide-y divide-white/5">
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-white/55">
+                    <td colSpan={7} className="p-8 text-center text-white/55">
                       <Users className="mx-auto mb-2 size-5 text-white/30" />
                       Aucune demande pour ce filtre.
                     </td>
@@ -100,6 +103,7 @@ function Page() {
                     <td className="p-4 font-medium text-white">{i.full_name}</td>
                     <td className="p-4">{i.email}</td>
                     <td className="p-4">{i.city ?? "—"}</td>
+                    <td className="max-w-xs p-4"><div className="font-medium text-white/80">{i.data?.subject ?? "—"}</div><div className="line-clamp-2 text-xs text-white/55">{i.message ?? "—"}</div></td>
                     <td className="p-4">
                       <span className={`rounded-full px-2 py-1 text-xs ${i.status === "validee" ? "bg-scout-green/15 text-scout-green" : i.status === "refusee" ? "bg-destructive/15 text-destructive-foreground" : "bg-white/5 text-white/65"}`}>{i.status}</span>
                     </td>
