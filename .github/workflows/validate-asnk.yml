@@ -1,6 +1,16 @@
 name: Validate ASNK build
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "scripts/**"
+      - "package.json"
+      - "vite.config.ts"
+      - "wrangler.toml"
+      - "Kivu Scouts Hub.zip"
+      - ".github/workflows/validate-asnk.yml"
   pull_request:
     branches: [main]
     paths:
