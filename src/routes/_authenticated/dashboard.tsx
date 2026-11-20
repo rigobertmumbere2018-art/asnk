@@ -24,6 +24,11 @@ function Page() {
         navigate({ to: "/admin", replace: true });
         return;
       }
+      const { data: assignments } = await supabase.from("district_commissioners").select("district_id").eq("user_id", user.id).eq("status", "active");
+      if ((assignments ?? []).length > 0) {
+        navigate({ to: "/district", replace: true });
+        return;
+      }
       setLoading(false);
     })();
   }, [user.id, navigate]);

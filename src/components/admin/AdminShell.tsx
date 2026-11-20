@@ -18,6 +18,7 @@ import {
   Bell,
   ScrollText,
   Mail,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ const NAV = [
   { to: "/admin/albums", label: "Galerie", icon: Images, exact: false },
   { to: "/admin/documents", label: "Documents", icon: FileText, exact: false },
   { to: "/admin/emails", label: "Adresses pro", icon: Mail, exact: false },
+  { to: "/admin/districts", label: "Districts", icon: MapPin, exact: false },
   { to: "/admin/inscriptions", label: "Inscriptions", icon: UserPlus, exact: false },
   { to: "/admin/notifications", label: "Notifications", icon: Bell, exact: false },
   { to: "/admin/logs", label: "Journal d'activité", icon: ScrollText, exact: false },
