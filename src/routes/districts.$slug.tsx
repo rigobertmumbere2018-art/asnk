@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2, MapPin, Mail, Phone, Users, UserRound } from "lucide-react";
 import { PageHero } from "@/components/site/PageHero";
 import { supabase } from "@/integrations/supabase/client";
+import { DISTRICT_ACTIVITIES, formatActivityDate } from "@/data/district-activities";
 
 export const Route = createFileRoute("/districts/$slug")({
   head: () => ({
@@ -143,6 +144,35 @@ function Page() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </article>
+
+            <article className="rounded-2xl border border-white/10 bg-card p-6 sm:p-8">
+              <h2 className="text-xl font-semibold text-white">Activités du district</h2>
+              {DISTRICT_ACTIVITIES.filter(activity => activity.districtSlug === district.slug).length === 0 ? (
+                <p className="mt-4 text-sm text-white/60">Aucune activité n’est publiée pour ce district pour le moment.</p>
+              ) : (
+                <div className="mt-5 space-y-4">
+                  {DISTRICT_ACTIVITIES.filter(activity => activity.districtSlug === district.slug).map(activity => {
+                    const activityDate = new Date(activity.date + "T23:59:59");
+                    const today = new Date();
+                    const status = activityDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
+                      ? "Activité terminée"
+                      : activity.date === today.toISOString().slice(0, 10) ? "En cours / aujourd’hui" : "À venir";
+                    return (
+                      <div key={activity.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="rounded-full bg-scout-green/10 px-3 py-1 text-scout-green">{status}</span>
+                          <span className="text-white/50">{formatActivityDate(activity.date)}</span>
+                        </div>
+                        <h3 className="mt-3 font-semibold text-white">{activity.title}</h3>
+                        <p className="mt-2 text-sm leading-6 text-white/65">{activity.description}</p>
+                        <p className="mt-3 text-xs text-white/50">{activity.location}{activity.time ? " · " + activity.time : ""}</p>
+                        {activity.image && <img src={activity.image} alt={activity.title} loading="lazy" className="mt-4 max-h-80 w-full rounded-lg object-contain" />}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </article>

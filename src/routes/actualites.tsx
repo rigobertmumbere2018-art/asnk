@@ -6,6 +6,7 @@ import { Calendar, Loader2 } from "lucide-react";
 import campagneImg from "@/assets/campagne-anti-incendie.jpg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/lib/cms";
+import { DISTRICT_ACTIVITIES, formatActivityDate } from "@/data/district-activities";
 
 export const Route = createFileRoute("/actualites")({
   head: () => ({
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/actualites")({
   component: Page,
 });
 
-type Article = { id?: string; cat: string; date: string; title: string; excerpt: string; image?: string };
+type Article = { id?: string; cat: string; date: string; title: string; excerpt: string; image?: string; district?: string };
 
 const SEED: Article[] = [
   {
@@ -35,22 +36,49 @@ function Page() {
   const [articles, setArticles] = useState<Article[] | null>(null);
 
   useEffect(() => {
+    let active = true;
     (async () => {
-      const { data } = await supabase
-        .from("posts")
-        .select("id, title, excerpt, cover_url, published_at, created_at")
-        .eq("status", "published")
-        .order("published_at", { ascending: false, nullsFirst: false });
-      const fromDb: Article[] = (data ?? []).map((p: any) => ({
-        id: p.id,
-        cat: "Actualité",
-        date: formatDate(p.published_at ?? p.created_at),
-        title: p.title,
-        excerpt: p.excerpt ?? "",
-        image: p.cover_url ?? undefined,
-      }));
-      setArticles(fromDb.length > 0 ? fromDb : SEED);
+      try {
+        const { data, error } = await supabase
+          .from("posts")
+          .select("id, title, excerpt, cover_url, published_at, created_at")
+          .eq("status", "published")
+          .order("published_at", { ascending: false, nullsFirst: false });
+        if (error) throw error;
+        const fromDb: Article[] = (data ?? []).map((p: any) => ({
+          id: p.id,
+          cat: "Actualité",
+          date: formatDate(p.published_at ?? p.created_at),
+          title: p.title,
+          excerpt: p.excerpt ?? "",
+          image: p.cover_url ?? undefined,
+        }));
+        const activities: Article[] = DISTRICT_ACTIVITIES.map(activity => ({
+          id: activity.id,
+          cat: "Activité de district",
+          date: formatActivityDate(activity.date),
+          title: activity.title,
+          excerpt: activity.description + " Lieu : " + activity.location + (activity.time ? " · " + activity.time : ""),
+          image: activity.image,
+          district: activity.districtName,
+        }));
+        if (active) setArticles([...activities, ...(fromDb.length > 0 ? fromDb : SEED)]);
+      } catch {
+        if (active) {
+          const activities: Article[] = DISTRICT_ACTIVITIES.map(activity => ({
+            id: activity.id,
+            cat: "Activité de district",
+            date: formatActivityDate(activity.date),
+            title: activity.title,
+            excerpt: activity.description + " Lieu : " + activity.location + (activity.time ? " · " + activity.time : ""),
+            image: activity.image,
+            district: activity.districtName,
+          }));
+          setArticles([...activities, ...SEED]);
+        }
+      }
     })();
+    return () => { active = false; };
   }, []);
 
   return (
@@ -60,29 +88,30 @@ function Page() {
         {articles === null ? (
           <div className="flex justify-center py-20"><Loader2 className="size-6 animate-spin text-white/60" /></div>
         ) : (
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {articles.map((a, i) => (
-            <Reveal key={i} delay={i * 100}>
-              <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-card transition hover:border-scout-green/40">
-                <div className="aspect-[16/10] overflow-hidden">
-                  {a.image ? (
-                    <img src={a.image} alt={a.title} loading="lazy" className="size-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                  ) : (
-                    <div className="size-full bg-gradient-to-br from-scout-purple/30 to-scout-green/30" />
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col p-7">
-                  <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-white/55">
-                    <span className="rounded-full bg-white/5 px-3 py-1 text-scout-green">{a.cat}</span>
-                    <span className="inline-flex items-center gap-1"><Calendar className="size-3" /> {a.date}</span>
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {articles.map((a, i) => (
+              <Reveal key={a.id ?? a.title} delay={i * 70}>
+                <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-card transition hover:border-scout-green/40">
+                  <div className="aspect-[16/10] overflow-hidden">
+                    {a.image ? (
+                      <img src={a.image} alt={a.title} loading="lazy" className="size-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    ) : (
+                      <div className="size-full bg-gradient-to-br from-scout-purple/30 to-scout-green/30" />
+                    )}
                   </div>
-                  <h3 className="mt-5 text-xl font-semibold text-white">{a.title}</h3>
-                  <p className="mt-3 flex-1 text-sm text-white/65">{a.excerpt}</p>
-                </div>
-              </article>
-            </Reveal>
-          ))}
-        </div>
+                  <div className="flex flex-1 flex-col p-7">
+                    <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-wider text-white/55">
+                      <span className="rounded-full bg-white/5 px-3 py-1 text-scout-green">{a.cat}</span>
+                      <span className="inline-flex items-center gap-1"><Calendar className="size-3" /> {a.date}</span>
+                    </div>
+                    {a.district && <p className="mt-3 text-xs text-white/45">{a.district}</p>}
+                    <h3 className="mt-4 text-xl font-semibold text-white">{a.title}</h3>
+                    <p className="mt-3 flex-1 text-sm text-white/65">{a.excerpt}</p>
+                  </div>
+                </article>
+              </Reveal>
+            ))}
+          </div>
         )}
       </section>
     </>
