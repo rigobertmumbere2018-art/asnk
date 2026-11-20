@@ -113,7 +113,7 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="fr">
       <head>
         <HeadContent />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" /><link rel="apple-touch-icon" href="https://pub-09215c6a4e1441598c606e92ab2a3793.r2.dev/a/v1/576f8e4d-1ed9-4839-9a34-ca86e6082572/c79e0e64-c755-40b4-beb8-642308358f38/asnk-logo.jpg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" /><link rel="apple-touch-icon" href="/favicon.svg" />
       </head>
       <body>
         {children}
