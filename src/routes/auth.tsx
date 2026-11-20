@@ -25,6 +25,9 @@ function Page() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [commissionerDistrict, setCommissionerDistrict] = useState("");
+  const [commissionerInvite, setCommissionerInvite] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -55,16 +58,16 @@ function Page() {
         return;
       }
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            data: { full_name: fullName.trim() || null },
-          },
-        });
-        if (error) throw error;
-        toast.success("Compte créé. Vous pouvez maintenant vous connecter.");
+        if (commissionerInvite) {
+          const response = await fetch("/api/auth/commissioner-signup", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password, password_confirmation: passwordConfirmation }) });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "Inscription impossible");
+          toast.success("Compte commissaire créé. Vous pouvez maintenant vous connecter.");
+        } else {
+          const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/`, data: { full_name: fullName.trim() || null } } });
+          if (error) throw error;
+          toast.success("Compte créé. Vous pouvez maintenant vous connecter.");
+        }
         setMode("login");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password, remember });
@@ -121,10 +124,11 @@ function Page() {
           </p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
-            {mode === "signup" && (
+            {mode === "signup" && !commissionerInvite && (
               <Input label="Nom complet" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" />
             )}
-            <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+            <Input label="Email" type="email" required value={email} onChange={(e) => { setEmail(e.target.value); setCommissionerInvite(false); setCommissionerDistrict(""); }} onBlur={async () => { if (mode === "signup" && email.includes("@")) { const response = await fetch("/api/auth/commissioner-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: email.trim().toLowerCase() }) }); const info = await response.json(); setCommissionerInvite(!!info.eligible); setCommissionerDistrict(info.district_name || ""); } }} autoComplete="email" />
+            {mode === "signup" && commissionerInvite && <div className="rounded-xl border border-scout-green/30 bg-scout-green/10 p-3 text-sm text-white">Adresse préaffectée au district : <strong>{commissionerDistrict}</strong></div>}
             {mode !== "forgot" && (
               <div>
                 <label className="text-xs uppercase tracking-wider text-white/50">Mot de passe</label>
@@ -148,6 +152,8 @@ function Page() {
                 </div>
               </div>
             )}
+
+            {mode === "signup" && commissionerInvite && <Input label="Confirmer le mot de passe" type="password" required value={passwordConfirmation} onChange={e => setPasswordConfirmation(e.target.value)} autoComplete="new-password" />}
 
             {mode === "login" && (
               <div className="flex items-center justify-between text-xs">
