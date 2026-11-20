@@ -171,7 +171,7 @@ function Page() {
                   <ul className="mt-3 space-y-2 text-sm">
                     {socialLinks.map((link, i) => (
                       <li key={i}>
-                        {link.url ? <a className="text-scout-green hover:text-white" href={link.url} target="_blank" rel="noreferrer">{link.label || link.name || link.url}</a> : <span className="text-white/60">{link.label || link.name || "À renseigner"}</span>}
+                        {link.url && /^https?:\/\//i.test(link.url) ? <a className="text-scout-green hover:text-white" href={link.url} target="_blank" rel="noreferrer">{link.label || link.name || link.url}</a> : <span className="text-white/60">{link.label || link.name || "À renseigner"}</span>}
                       </li>
                     ))}
                   </ul>

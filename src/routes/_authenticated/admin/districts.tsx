@@ -100,7 +100,7 @@ function Page() {
   async function addGroup() {
     if(!groupDraft.district_id||!groupDraft.name.trim())return toast.error("District et nom du groupe obligatoires.");
     const youngCount=Number(groupDraft.young_members),adultCount=Number(groupDraft.adult_volunteers);
-    if(!Number.isInteger(youngCount)||youngCount<0||!Number.isInteger(adultCount)||adultCount<0)return toast.error("Effectifs invalides.");
+    if(groupDraft.young_members.trim()===""||groupDraft.adult_volunteers.trim()===""||!Number.isInteger(youngCount)||youngCount<0||!Number.isInteger(adultCount)||adultCount<0)return toast.error("Les deux effectifs doivent être renseignés avec des nombres entiers positifs.");
     setSaving(true);
     const {error}=await supabase.from("scout_groups").insert({
       district_id:groupDraft.district_id,name:groupDraft.name.trim(),locality:groupDraft.locality.trim()||null,
@@ -187,8 +187,8 @@ function Page() {
               <label className={label}>Nom du groupe<input className={field} value={groupDraft.name} onChange={e=>setGroupDraft({...groupDraft,name:e.target.value})}/></label>
               <label className={label}>Localité<input className={field} value={groupDraft.locality} onChange={e=>setGroupDraft({...groupDraft,locality:e.target.value})}/></label>
               <label className={label}>Description<input className={field} value={groupDraft.description} onChange={e=>setGroupDraft({...groupDraft,description:e.target.value})}/></label>
-              <label className={label}>Jeunes membres<input type="number" min="0" step="1" className={field} value={groupDraft.young_members} onChange={e=>setGroupDraft({...groupDraft,young_members:e.target.value})}/></label>
-              <label className={label}>Adultes bénévoles<input type="number" min="0" step="1" className={field} value={groupDraft.adult_volunteers} onChange={e=>setGroupDraft({...groupDraft,adult_volunteers:e.target.value})}/></label>
+              <label className={label}>Jeunes membres<input type="number" min="0" step="1" required className={field} value={groupDraft.young_members} onChange={e=>setGroupDraft({...groupDraft,young_members:e.target.value})}/></label>
+              <label className={label}>Adultes bénévoles<input type="number" min="0" step="1" required className={field} value={groupDraft.adult_volunteers} onChange={e=>setGroupDraft({...groupDraft,adult_volunteers:e.target.value})}/></label>
             </div>
             <div className="mt-4 flex justify-end"><button disabled={saving} onClick={addGroup} className="inline-flex items-center gap-2 rounded-full border border-scout-green/40 px-5 py-2.5 text-sm text-scout-green"><Users className="size-4"/>Ajouter le groupe approuvé</button></div>
             <div className="mt-6 overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead className="text-xs uppercase tracking-wider text-white/45"><tr><th className="p-3">Groupe</th><th className="p-3">District</th><th className="p-3">Jeunes</th><th className="p-3">Adultes</th><th className="p-3">Statut</th><th className="p-3">Action</th></tr></thead><tbody className="divide-y divide-white/5">

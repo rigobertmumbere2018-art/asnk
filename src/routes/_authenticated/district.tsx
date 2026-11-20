@@ -67,7 +67,7 @@ function Page(){
   }
   async function proposeGroup(){
     const y=Number(groupDraft.young_members),a=Number(groupDraft.adult_volunteers);
-    if(!groupDraft.name.trim()||!Number.isInteger(y)||y<0||!Number.isInteger(a)||a<0)return toast.error("Nom et effectifs valides obligatoires.");
+    if(!groupDraft.name.trim()||groupDraft.young_members.trim()===""||groupDraft.adult_volunteers.trim()===""||!Number.isInteger(y)||y<0||!Number.isInteger(a)||a<0)return toast.error("Nom du groupe et deux effectifs obligatoires.");
     await submit("group_create",{...groupDraft,young_members:y,adult_volunteers:a});
     setGroupDraft(blankGroup);
   }
@@ -101,7 +101,7 @@ function Page(){
             <label className={label}>Nom du groupe<input className={field} value={groupDraft.name} onChange={e=>setGroupDraft({...groupDraft,name:e.target.value})}/></label>
             <label className={label}>Localité<input className={field} value={groupDraft.locality} onChange={e=>setGroupDraft({...groupDraft,locality:e.target.value})}/></label>
             <label className={label}>Description<textarea rows={2} className={field} value={groupDraft.description} onChange={e=>setGroupDraft({...groupDraft,description:e.target.value})}/></label>
-            <div className="grid grid-cols-2 gap-3"><label className={label}>Jeunes<input type="number" min="0" className={field} value={groupDraft.young_members} onChange={e=>setGroupDraft({...groupDraft,young_members:e.target.value})}/></label><label className={label}>Adultes bénévoles<input type="number" min="0" className={field} value={groupDraft.adult_volunteers} onChange={e=>setGroupDraft({...groupDraft,adult_volunteers:e.target.value})}/></label></div>
+            <div className="grid grid-cols-2 gap-3"><label className={label}>Jeunes<input type="number" min="0" required className={field} value={groupDraft.young_members} onChange={e=>setGroupDraft({...groupDraft,young_members:e.target.value})}/></label><label className={label}>Adultes bénévoles<input type="number" min="0" required className={field} value={groupDraft.adult_volunteers} onChange={e=>setGroupDraft({...groupDraft,adult_volunteers:e.target.value})}/></label></div>
           </div>
           <div className="mt-5 flex justify-end"><button disabled={saving} onClick={proposeGroup} className="inline-flex items-center gap-2 rounded-full border border-scout-green/40 px-5 py-2.5 text-sm text-scout-green"><Users className="size-4"/>Soumettre le groupe</button></div>
         </div>
