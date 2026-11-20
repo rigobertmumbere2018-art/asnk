@@ -25,6 +25,20 @@ type District = {
   description: string | null;
 };
 
+const DISTRICT_LIST_FALLBACK: District[] = [
+  { id: "beni-territoire", slug: "beni-territoire", name: "District Scout de Beni Territoire", code: "DSBT", description: null },
+  { id: "beni-ville", slug: "beni-ville", name: "District Scout de Beni Ville", code: "DSBV", description: null },
+  { id: "butembo", slug: "butembo", name: "District Scout de Butembo", code: "DSB", description: null },
+  { id: "goma", slug: "goma", name: "District Scout de Goma", code: "DSG", description: null },
+  { id: "lubero", slug: "lubero", name: "District Scout de Lubero", code: "DSL", description: null },
+  { id: "masisi", slug: "masisi", name: "District Scout de Masisi", code: "DSM", description: null },
+  { id: "mughulungu", slug: "mughulungu", name: "District Scout de Mughulungu", code: "DSMU", description: null },
+  { id: "nyiragongo", slug: "nyiragongo", name: "District Scout de Nyiragongo", code: "DSN", description: null },
+  { id: "rutshuru", slug: "rutshuru", name: "District Scout de Rutshuru", code: "DSR", description: null },
+  { id: "walikale", slug: "walikale", name: "District Scout de Walikale", code: "DSW", description: null },
+  { id: "luholu", slug: "luholu", name: "District Scout de la Luholu", code: "DSL", description: null },
+];
+
 function Page() {
   const [districts, setDistricts] = useState<District[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,8 +52,13 @@ function Page() {
         .eq("status", "active")
         .order("name", { ascending: true });
       if (!active) return;
-      if (queryError) setError(queryError.message);
-      setDistricts((data ?? []) as District[]);
+      if (queryError) {
+        setError(null);
+        setDistricts(DISTRICT_LIST_FALLBACK);
+      } else {
+        setError(null);
+        setDistricts((data ?? []) as District[]);
+      }
     })();
     return () => { active = false; };
   }, []);
