@@ -76,7 +76,7 @@ function Page(){
   async function proposeDistrict(){
     if(districtDraft.professional_email&&!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(districtDraft.professional_email))return toast.error("Adresse email professionnelle invalide.");
     const social=parseLines(districtDraft.social_links,"url");
-    if(social.some(link=>link.url&&!/^https?:\\/\\//i.test(link.url)))return toast.error("Les liens sociaux doivent commencer par http:// ou https://.");
+    if(social.some(link=>link.url&&!(link.url.startsWith("https://")||link.url.startsWith("http://"))))return toast.error("Les liens sociaux doivent commencer par http:// ou https://.");
     await submit("district_update",{...districtDraft,other_contacts:parseLines(districtDraft.other_contacts,"value"),social_links:social});
   }
   async function proposeGroup(){
