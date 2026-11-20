@@ -44,6 +44,7 @@ function Page() {
   const [districtDraft,setDistrictDraft]=useState(emptyDistrict);
   const [groupDraft,setGroupDraft]=useState(emptyGroup);
   const [assignUserId,setAssignUserId]=useState("");
+  const [commissionerEmail,setCommissionerEmail]=useState("");
   const [notes,setNotes]=useState<Record<string,string>>({});
   const [loading,setLoading]=useState(true);
   const [saving,setSaving]=useState(false);
@@ -125,14 +126,14 @@ function Page() {
   }
 
   async function assignCommissioner() {
-    if(!selectedDistrictId||!assignUserId)return toast.error("Sélectionnez un district et un compte.");
+    if(!selectedDistrictId||(!assignUserId&&!commissionerEmail.trim()))return toast.error("Sélectionnez un district et indiquez un compte ou un email.");
     setSaving(true);
     try {
-      const response=await fetch("/api/districts/assign",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify({district_id:selectedDistrictId,user_id:assignUserId})});
+      const response=await fetch("/api/districts/assign",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify({district_id:selectedDistrictId,user_id:assignUserId||undefined,email:commissionerEmail.trim()||undefined})});
       const result=await response.json();
       if(!response.ok)throw new Error(result.error||"Affectation impossible");
-      toast.success(result.already_assigned?"Ce compte est déjà affecté à ce district.":"Affectation enregistrée. Les anciennes affectations sont conservées.");
-      setAssignUserId("");
+      toast.success(result.already_assigned?"Cette adresse est déjà affectée à ce district.":result.invited?"Email préaffecté. Le commissaire pourra créer son mot de passe.":"Affectation enregistrée.");
+      setAssignUserId(""); setCommissionerEmail("");
       await refresh();
     } catch(e) { toast.error(e instanceof Error?e.message:"Affectation impossible"); }
     finally { setSaving(false); }
@@ -203,11 +204,13 @@ function Page() {
 
           <section className="mt-6 rounded-2xl border border-white/10 bg-card p-5 sm:p-7">
             <h2 className="text-lg font-semibold">Affectation des commissaires</h2>
-            {users.length===0?<p className="mt-3 text-sm text-white/55">Aucun compte utilisateur actif n'est disponible. Les comptes pourront être affectés après leur création.</p>:(
-              <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+            {users.length===0&&<p className="mt-3 text-sm text-white/55">Vous pouvez préaffecter une adresse email avant la création du compte.</p>}
+            {true&&(
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <select className={field} value={selectedDistrictId} onChange={e=>setSelectedDistrictId(e.target.value)}>{districts.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select>
-                <select className={field} value={assignUserId} onChange={e=>setAssignUserId(e.target.value)}><option value="">Choisir un compte</option>{users.map(u=><option key={u.id} value={u.id}>{u.email}</option>)}</select>
-                <button disabled={saving||!assignUserId} onClick={assignCommissioner} className="inline-flex items-center justify-center gap-2 rounded-full bg-scout-green px-5 py-2.5 text-sm font-semibold text-scout-deep"><UserPlus className="size-4"/>Affecter</button>
+                <input type="email" className={field} placeholder="Email professionnel du commissaire" value={commissionerEmail} onChange={e=>{setCommissionerEmail(e.target.value);setAssignUserId("");}} />
+                <select className={field} value={assignUserId} onChange={e=>{setAssignUserId(e.target.value);setCommissionerEmail("");}}><option value="">Ou choisir un compte existant</option>{users.map(u=><option key={u.id} value={u.id}>{u.email}</option>)}</select>
+                <button disabled={saving||(!assignUserId&&!commissionerEmail.trim())} onClick={assignCommissioner} className="inline-flex items-center justify-center gap-2 rounded-full bg-scout-green px-5 py-2.5 text-sm font-semibold text-scout-deep"><UserPlus className="size-4"/>Affecter</button>
               </div>
             )}
             <div className="mt-5 space-y-2">{assignments.map(a=><div key={a.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-3 text-sm"><div>{users.find(u=>u.id===a.user_id)?.email||"Compte utilisateur"}<p className="text-xs text-white/45">{districts.find(d=>d.id===a.district_id)?.name||"District"}</p></div><span className={a.status==="active"?"text-xs text-scout-green":"text-xs text-white/45"}>{a.status==="active"?"Affectation active":"Ancienne affectation"}</span></div>)}</div>
