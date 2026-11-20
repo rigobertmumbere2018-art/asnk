@@ -49,15 +49,16 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Publish real ASNK Worker
-        if: github.event_name == 'workflow_dispatch' && secrets.CLOUDFLARE_API_TOKEN != ''
+      - name: Publish real ASNK Worker when credentials are configured
+        if: github.event_name == 'workflow_dispatch'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: "3453b4d54fc81067b4cc62eb7c117739"
-        run: npx wrangler deploy --config .output/server/wrangler.json
-
-      - name: Explain deployment prerequisite
-        if: github.event_name == 'workflow_dispatch' && secrets.CLOUDFLARE_API_TOKEN == ''
+        shell: bash
         run: |
-          echo "::notice::Build and dry-run passed, but production publish was skipped."
-          echo "::notice::Add CLOUDFLARE_API_TOKEN to GitHub repository Actions secrets, then run this workflow manually."
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::notice::Build and dry-run passed, but production publish was skipped."
+            echo "::notice::Add CLOUDFLARE_API_TOKEN to GitHub repository Actions secrets, then run this workflow manually."
+            exit 0
+          fi
+          npx wrangler deploy --config .output/server/wrangler.json
