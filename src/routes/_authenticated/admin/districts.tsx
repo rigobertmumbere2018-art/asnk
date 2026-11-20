@@ -10,6 +10,7 @@ type Group = { id:string; district_id:string; name:string; locality:string|null;
 type User = { id:string; email:string; disabled:boolean };
 type Assignment = { id:string; district_id:string; user_id:string; status:string; created_at:string };
 type Proposal = { id:string; district_id:string; change_type:string; proposed_data:any; previous_data:any; status:string; review_note:string|null; created_at:string };
+type AuditLog = { id:string; district_id:string; actor_id:string|null; action:string; entity_type:string; entity_id:string; details:any; created_at:string };
 
 export const Route = createFileRoute("/_authenticated/admin/districts")({
   head: () => ({ meta: [{ title: "Gestion des districts — Administration ASNK" }] }),
@@ -38,6 +39,7 @@ function Page() {
   const [users,setUsers]=useState<User[]>([]);
   const [assignments,setAssignments]=useState<Assignment[]>([]);
   const [proposals,setProposals]=useState<Proposal[]>([]);
+  const [logs,setLogs]=useState<AuditLog[]>([]);
   const [selectedDistrictId,setSelectedDistrictId]=useState("");
   const [districtDraft,setDistrictDraft]=useState(emptyDistrict);
   const [groupDraft,setGroupDraft]=useState(emptyGroup);
@@ -54,9 +56,10 @@ function Page() {
       supabase.from("users").select("id,email,disabled").order("email",{ascending:true}),
       supabase.from("district_commissioners").select("*").order("created_at",{ascending:false}),
       supabase.from("district_change_requests").select("*").order("created_at",{ascending:false}),
+      supabase.from("district_audit_log").select("*").order("created_at",{ascending:false}).limit(100),
     ]);
-    const d=results[0],g=results[1],u=results[2],a=results[3],p=results[4];
-    const firstError=d.error||g.error||u.error||a.error||p.error;
+    const d=results[0],g=results[1],u=results[2],a=results[3],p=results[4],l=results[5];
+    const firstError=d.error||g.error||u.error||a.error||p.error||l.error;
     if(firstError) toast.error(firstError.message);
     const rows=(d.data||[]) as District[];
     setDistricts(rows);
@@ -64,6 +67,7 @@ function Page() {
     setUsers(((u.data||[]) as User[]).filter(x=>!x.disabled));
     setAssignments((a.data||[]) as Assignment[]);
     setProposals((p.data||[]) as Proposal[]);
+    setLogs((l.data||[]) as AuditLog[]);
     setSelectedDistrictId(current=>current||rows[0]?.id||"");
     setLoading(false);
   }
@@ -217,6 +221,25 @@ function Page() {
               <label className={label+" mt-4"}>Note<textarea rows={2} className={field} value={notes[p.id]||""} onChange={e=>setNotes({...notes,[p.id]:e.target.value})}/></label>
               <div className="mt-4 flex flex-wrap justify-end gap-2"><button disabled={saving} onClick={()=>review(p,"request_revision")} className="rounded-full border border-white/15 px-4 py-2 text-xs text-white/70">Demander une correction</button><button disabled={saving} onClick={()=>review(p,"reject")} className="inline-flex items-center gap-1 rounded-full border border-red-400/30 px-4 py-2 text-xs text-red-300"><X className="size-3.5"/>Rejeter</button><button disabled={saving} onClick={()=>review(p,"approve")} className="inline-flex items-center gap-1 rounded-full bg-scout-green px-4 py-2 text-xs font-semibold text-scout-deep"><Check className="size-3.5"/>Approuver</button></div>
             </article>)}
+          </section>
+
+          <section className="mt-6 rounded-2xl border border-white/10 bg-card p-5 sm:p-7">
+            <h2 className="text-lg font-semibold">Journal d'audit des districts</h2>
+            <p className="mt-1 text-xs text-white/45">Les affectations, propositions, validations et modifications sont conservées ici.</p>
+            <div className="mt-4 space-y-3">
+              {logs.map(log=><div key={log.id} className="rounded-xl border border-white/10 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium">{log.action.replaceAll("_"," ")}</p>
+                  <time className="text-xs text-white/45">{new Date(log.created_at).toLocaleString("fr-FR")}</time>
+                </div>
+                <p className="mt-1 text-xs text-white/55">{districts.find(d=>d.id===log.district_id)?.name||"District"} · {log.entity_type} · {log.actor_id||"Système"}</p>
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs text-scout-green">Détails de l'opération</summary>
+                  <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-scout-deep p-3 text-[11px] text-white/60">{JSON.stringify(log.details||{},null,2)}</pre>
+                </details>
+              </div>)}
+              {logs.length===0&&<p className="text-sm text-white/50">Aucune opération enregistrée pour le moment.</p>}
+            </div>
           </section>
         </>
       )}

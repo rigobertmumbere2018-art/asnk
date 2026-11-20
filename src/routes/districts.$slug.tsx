@@ -161,7 +161,7 @@ function Page() {
                 <div className="mt-5 border-t border-white/10 pt-4">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-white/45">Autres contacts</h3>
                   <ul className="mt-3 space-y-2 text-sm text-white/65">
-                    {contacts.map((contact, i) => <li key={i}>{contact.label || contact.name || contact.value || "Contact"}</li>)}
+                    {contacts.map((contact, i) => <li key={i}>{contact.label || contact.name || "Contact"}{contact.value ? ": " + contact.value : ""}</li>)}
                   </ul>
                 </div>
               )}

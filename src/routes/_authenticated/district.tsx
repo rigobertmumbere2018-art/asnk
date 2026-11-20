@@ -5,11 +5,23 @@ import { toast } from "sonner";
 import { ClipboardList, Loader2, Send, Users } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 
-type District = { id:string; name:string; code:string|null; description:string|null; history:string|null; commissioner_name:string|null; office_address:string|null; phone:string|null; professional_email:string|null };
+type District = { id:string; name:string; code:string|null; description:string|null; history:string|null; commissioner_name:string|null; office_address:string|null; phone:string|null; professional_email:string|null; other_contacts:any; social_links:any };
 type Group = { id:string; name:string; locality:string|null; description:string|null; young_members:number; adult_volunteers:number; status:string };
 type Proposal = { id:string; change_type:string; status:string; review_note:string|null; created_at:string };
-const blankDistrict={description:"",history:"",commissioner_name:"",office_address:"",phone:"",professional_email:""};
+const blankDistrict={description:"",history:"",commissioner_name:"",office_address:"",phone:"",professional_email:"",other_contacts:"",social_links:""};
 const blankGroup={name:"",locality:"",description:"",young_members:"",adult_volunteers:""};
+function listText(value:any,key:"value"|"url"){
+  let rows:any[]=value;
+  if(typeof value==="string"){try{rows=JSON.parse(value)}catch{rows=[]}}
+  if(!Array.isArray(rows))return "";
+  return rows.map(row=>[row.label||row.name||"",row[key]||""].filter(Boolean).join("|")).join("\n");
+}
+function parseLines(value:string,key:"value"|"url"){
+  return value.split("\n").map(line=>line.trim()).filter(Boolean).map(line=>{
+    const parts=line.split("|");
+    return {label:(parts.shift()||"").trim(),[key]:parts.join("|").trim()};
+  });
+}
 
 export const Route=createFileRoute("/_authenticated/district")({
   beforeLoad:async({context})=>{
@@ -43,7 +55,7 @@ function Page(){
     ]);
     if(d.error||!d.data){toast.error(d.error?.message||"Fiche de district introuvable");setLoading(false);return}
     setDistrict(d.data as District);
-    setDistrictDraft({description:d.data.description||"",history:d.data.history||"",commissioner_name:d.data.commissioner_name||"",office_address:d.data.office_address||"",phone:d.data.phone||"",professional_email:d.data.professional_email||""});
+    setDistrictDraft({description:d.data.description||"",history:d.data.history||"",commissioner_name:d.data.commissioner_name||"",office_address:d.data.office_address||"",phone:d.data.phone||"",professional_email:d.data.professional_email||"",other_contacts:listText(d.data.other_contacts,"value"),social_links:listText(d.data.social_links,"url")});
     setGroups((g.data||[]) as Group[]);
     setProposals((p.data||[]) as Proposal[]);
     if(g.error)toast.error(g.error.message);
@@ -63,7 +75,9 @@ function Page(){
   }
   async function proposeDistrict(){
     if(districtDraft.professional_email&&!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(districtDraft.professional_email))return toast.error("Adresse email professionnelle invalide.");
-    await submit("district_update",districtDraft);
+    const social=parseLines(districtDraft.social_links,"url");
+    if(social.some(link=>link.url&&!/^https?:\\/\\//i.test(link.url)))return toast.error("Les liens sociaux doivent commencer par http:// ou https://.");
+    await submit("district_update",{...districtDraft,other_contacts:parseLines(districtDraft.other_contacts,"value"),social_links:social});
   }
   async function proposeGroup(){
     const y=Number(groupDraft.young_members),a=Number(groupDraft.adult_volunteers);
@@ -91,6 +105,8 @@ function Page(){
           <label className={label}>Adresse du bureau<input className={field} value={districtDraft.office_address} onChange={e=>setDistrictDraft({...districtDraft,office_address:e.target.value})}/></label>
           <label className={label}>Téléphone<input className={field} value={districtDraft.phone} onChange={e=>setDistrictDraft({...districtDraft,phone:e.target.value})}/></label>
           <label className={label}>Email professionnel<input type="email" className={field} value={districtDraft.professional_email} onChange={e=>setDistrictDraft({...districtDraft,professional_email:e.target.value})}/></label>
+          <label className={label}>Autres contacts — Nom|Valeur<textarea rows={3} className={field} value={districtDraft.other_contacts} onChange={e=>setDistrictDraft({...districtDraft,other_contacts:e.target.value})}/></label>
+          <label className={label}>Réseaux sociaux — Nom|URL<textarea rows={3} className={field} value={districtDraft.social_links} onChange={e=>setDistrictDraft({...districtDraft,social_links:e.target.value})}/></label>
         </div>
         <div className="mt-5 flex justify-end"><button disabled={saving} onClick={proposeDistrict} className="inline-flex items-center gap-2 rounded-full bg-scout-green px-5 py-2.5 text-sm font-semibold text-scout-deep"><Send className="size-4"/>Soumettre la proposition</button></div>
       </section>
