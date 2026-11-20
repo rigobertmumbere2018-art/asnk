@@ -20,7 +20,6 @@ import {
   Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/asnk-logo.jpg.asset.json";
 
 const NAV = [
   { to: "/admin", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
@@ -76,7 +75,7 @@ export function AdminShell({ children, email }: { children: React.ReactNode; ema
       {/* Top bar mobile */}
       <div className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-scout-deep/95 px-4 py-3 backdrop-blur lg:hidden">
         <Link to="/admin" className="flex items-center gap-2">
-          <img src={logo.url} alt="ASNK" className="size-8 rounded-md" />
+          <img src="/favicon.svg" alt="ASNK" className="size-8 rounded-md" />
           <span className="text-sm font-semibold">Administration</span>
         </Link>
         <button
@@ -98,7 +97,7 @@ export function AdminShell({ children, email }: { children: React.ReactNode; ema
         >
           <div className="flex h-full flex-col">
             <div className="hidden items-center gap-3 border-b border-white/10 px-6 py-5 lg:flex">
-              <img src={logo.url} alt="ASNK" className="size-10 rounded-md" />
+              <img src="/favicon.svg" alt="ASNK" className="size-10 rounded-md" />
               <div className="leading-tight">
                 <div className="text-sm font-semibold">Administration</div>
                 <div className="text-xs text-white/55">Scouts du Nord-Kivu</div>

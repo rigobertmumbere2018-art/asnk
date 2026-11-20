@@ -181,13 +181,17 @@ function Page() {
 
             <article className="rounded-2xl border border-white/10 bg-card p-6">
               <h2 className="text-lg font-semibold text-white">Effectifs validés</h2>
-              <p className="mt-4 text-3xl font-semibold text-white">{young + adults}</p>
+              <p className="mt-4 text-3xl font-semibold text-white">{groups.length > 0 ? young + adults : "À renseigner"}</p>
               <p className="text-xs text-white/45">Membres et bénévoles des groupes approuvés</p>
-              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
-                <div><p className="text-xl font-semibold text-white">{young}</p><p className="text-xs text-white/45">Jeunes</p></div>
-                <div><p className="text-xl font-semibold text-white">{adults}</p><p className="text-xs text-white/45">Adultes bénévoles</p></div>
-              </div>
-              <p className="mt-3 text-[11px] text-white/40">{groups.length} groupe(s) approuvé(s)</p>
+              {groups.length > 0 ? (
+                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
+                  <div><p className="text-xl font-semibold text-white">{young}</p><p className="text-xs text-white/45">Jeunes</p></div>
+                  <div><p className="text-xl font-semibold text-white">{adults}</p><p className="text-xs text-white/45">Adultes bénévoles</p></div>
+                </div>
+              ) : (
+                <p className="mt-4 border-t border-white/10 pt-4 text-xs text-white/50">Les effectifs seront affichés après validation des données du district.</p>
+              )}
+              <p className="mt-3 text-[11px] text-white/40">{groups.length > 0 ? `${groups.length} groupe(s) approuvé(s)` : "Groupes approuvés : à renseigner"}</p>
             </article>
           </aside>
         </div>
