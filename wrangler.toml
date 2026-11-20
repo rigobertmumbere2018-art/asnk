@@ -13,6 +13,8 @@ run_worker_first = true
 binding = "ASNK_DB"
 database_name = "asnk-scouts-db"
 database_id = "22fa56ef-8d49-4acc-9296-5ac546d4c0d9"
+migrations_dir = "migrations"
+migrations_table = "d1_migrations"
 
 [[r2_buckets]]
 binding = "ASNK_MEDIA"
