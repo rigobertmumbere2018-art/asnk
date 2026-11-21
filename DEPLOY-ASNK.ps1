@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 $Project = "C:\ASNK"
-$Base = "https://raw.githubusercontent.com/rigobertmumbere2018-art/asnk/fix/windows-asset-restore"
+$Base = "https://raw.githubusercontent.com/rigobertmumbere2018-art/asnk/main"
 
 Write-Host "=== Mise a jour ciblee et deploiement ASNK sur Cloudflare ===" -ForegroundColor Cyan
 if (-not (Test-Path (Join-Path $Project "package.json"))) { throw "package.json introuvable dans C:\ASNK." }
