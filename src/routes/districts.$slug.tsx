@@ -97,6 +97,7 @@ function Page() {
   const adults = groups.reduce((sum, group) => sum + (Number(group.adult_volunteers) || 0), 0);
   const socialLinks = district ? parseList(district.social_links) : [];
   const contacts = district ? parseList(district.other_contacts) : [];
+  const displayCode = district?.slug === "luholu" ? "DSLH" : district?.code;
 
   if (loading) {
     return <section className="mx-auto flex min-h-[50vh] max-w-7xl items-center justify-center px-5"><Loader2 className="size-7 animate-spin text-white/60" /></section>;
@@ -115,7 +116,7 @@ function Page() {
 
   return (
     <>
-      <PageHero eyebrow={district.code || "District ASNK"} title={district.name} lead={display(district.description)} />
+      <PageHero eyebrow={displayCode || "District ASNK"} title={district.name} lead={display(district.description)} />
       <section className="mx-auto max-w-7xl px-5 py-14 lg:px-8">
         <Link to="/districts" className="mb-8 inline-flex items-center gap-2 text-sm text-scout-green transition hover:text-white">
           <ArrowLeft className="size-4" /> Retour aux districts
