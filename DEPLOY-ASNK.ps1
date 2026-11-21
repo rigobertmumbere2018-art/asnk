@@ -14,6 +14,7 @@ New-Item -ItemType Directory -Path $Backup -Force | Out-Null
 
 $Files = @(
   "src/routes/districts.tsx",
+  "src/routes/index.tsx",
   "src/routes/actualites.tsx",
   'src/routes/districts.$slug.tsx',
   "src/data/district-activities.ts",
