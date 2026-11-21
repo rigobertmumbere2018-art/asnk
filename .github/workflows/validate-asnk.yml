@@ -1,4 +1,4 @@
-name: Validate ASNK build
+name: Validate and deploy ASNK
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - "src/**"
       - "scripts/**"
       - "package.json"
+      - "package-lock.json"
       - "vite.config.ts"
       - "wrangler.toml"
       - "Kivu Scouts Hub.zip"
@@ -17,6 +18,7 @@ on:
       - "src/**"
       - "scripts/**"
       - "package.json"
+      - "package-lock.json"
       - "vite.config.ts"
       - "wrangler.toml"
       - "Kivu Scouts Hub.zip"
@@ -36,3 +38,9 @@ jobs:
           cache: npm
       - run: npm install
       - run: npm run build
+      - name: Deploy to Cloudflare production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: "3453b4d54fc81067b4cc62eb7c117739"
